@@ -29,14 +29,14 @@ nav{position:fixed;top:0;left:0;right:0;z-index:9000;
 .nav-links{display:flex;gap:16px;flex-wrap:wrap}
 .nav-links button{background:none;border:none;padding:3px 0;
   font-size:10px;letter-spacing:2px;text-transform:uppercase;
-  color:var(--muted);cursor:pointer;transition:color .2s;
-  border-bottom:1px solid transparent}
-.nav-links button:hover{color:var(--cyan)}
-.nav-links button.active{color:var(--cyan);border-bottom-color:var(--cyan)}
-.nav-links button.lime{color:var(--lime)}
-.nav-links button.lime:hover,.nav-links button.lime.active{color:var(--lime);border-bottom-color:var(--lime)}
-.nav-links button.gold{color:var(--gold)}
-.nav-links button.gold:hover,.nav-links button.gold.active{color:var(--gold);border-bottom-color:var(--gold)}
+  color:var(--cyan);cursor:pointer;transition:color .2s,border-color .2s;
+  border-bottom:1px solid transparent;opacity:0.6}
+.nav-links button:hover{opacity:1;border-bottom-color:var(--cyan)}
+.nav-links button.active{opacity:1;border-bottom-color:var(--cyan)}
+.nav-links button.lime{color:var(--cyan)}
+.nav-links button.lime:hover,.nav-links button.lime.active{color:var(--cyan);border-bottom-color:var(--cyan)}
+.nav-links button.gold{color:var(--cyan)}
+.nav-links button.gold:hover,.nav-links button.gold.active{color:var(--cyan);border-bottom-color:var(--cyan)}
 .nav-tag{font-size:9px;color:var(--muted);border:1px solid var(--border);padding:2px 9px;white-space:nowrap;flex-shrink:0}
 
 /* TICKER */
@@ -126,10 +126,10 @@ h1 .l{color:var(--lime)}
 .tab-bar{display:flex;border-bottom:1px solid var(--border);margin-bottom:28px}
 .tab-btn{padding:9px 20px;background:none;border:none;
   font-size:10px;letter-spacing:2px;text-transform:uppercase;
-  color:var(--muted);cursor:pointer;
-  border-bottom:2px solid transparent;margin-bottom:-1px;transition:color .2s}
-.tab-btn:hover{color:var(--text)}
-.tab-btn.on{color:var(--cyan);border-bottom-color:var(--cyan)}
+  color:var(--cyan);opacity:0.5;cursor:pointer;
+  border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .2s}
+.tab-btn:hover{opacity:0.85}
+.tab-btn.on{color:var(--cyan);opacity:1;border-bottom-color:var(--cyan)}
 .tab-pane{display:none}
 .tab-pane.on{display:grid;grid-template-columns:1fr 1fr;gap:36px}
 .flow-box{background:var(--bg2);border:1px solid var(--border);padding:24px}
@@ -238,15 +238,15 @@ h1 .l{color:var(--lime)}
 .int-footer-lbl{font-size:20px;color:var(--cyan);border:1px solid var(--border);padding:9px 13px;flex-shrink:0}
 
 /* FAQ */
-.faq-layout{display:grid;grid-template-columns:170px 1fr;gap:40px;align-items:start}
-.faq-nav{position:sticky;top:68px}
-.faq-nav-lbl{font-size:9px;color:var(--muted);letter-spacing:3px;margin-bottom:10px}
+.faq-layout{display:grid;grid-template-columns:190px 1fr;gap:48px;align-items:start}
+.faq-nav{position:sticky;top:72px;background:var(--bg2);border:1px solid var(--border);padding:16px}
+.faq-nav-lbl{font-size:9px;color:var(--muted);letter-spacing:3px;margin-bottom:12px;display:block}
 .faq-nav-btn{display:flex;align-items:center;gap:8px;width:100%;
-  padding:9px 11px;margin-bottom:4px;background:transparent;
-  font-size:11px;text-align:left;color:var(--muted);
-  border:none;border-left:2px solid var(--border);cursor:pointer;transition:all .2s}
-.faq-nav-btn:hover{color:var(--text)}
-.faq-nav-btn.on{color:var(--cyan);border-left-color:var(--cyan);background:rgba(0,229,200,.04)}
+  padding:10px 12px;margin-bottom:3px;background:transparent;
+  font-size:11px;text-align:left;color:var(--cyan);opacity:0.55;
+  border:none;border-left:2px solid var(--border);cursor:pointer;transition:all .2s;white-space:nowrap}
+.faq-nav-btn:hover{opacity:0.85}
+.faq-nav-btn.on{opacity:1;border-left-color:var(--cyan);background:rgba(0,229,200,.06)}
 .faq-nav-btn::before{content:"";width:5px;height:5px;border-radius:50%;background:currentColor;flex-shrink:0}
 .faq-panel{margin-bottom:52px;scroll-margin-top:80px}
 .faq-panel-title{font-size:26px;color:#fff;margin-bottom:16px}
@@ -317,10 +317,10 @@ footer{background:var(--bg);border-top:1px solid var(--border);
   .hero-grid,.att-grid,.def-grid,.locker-grid,.bp-grid,.tab-pane.on{grid-template-columns:1fr}
   .score-grid,.rfi-grid,.pillars,.schema-grid{grid-template-columns:1fr 1fr}
   .faq-layout{grid-template-columns:1fr}
-  .faq-nav{position:static;display:flex;flex-wrap:wrap;gap:6px;margin-bottom:20px}
+  .faq-nav{position:static;display:flex;flex-wrap:wrap;gap:6px;margin-bottom:20px;padding:12px;background:var(--bg2);border:1px solid var(--border)}
   .faq-nav-lbl{display:none}
-  .faq-nav-btn{border:1px solid var(--border);border-left:none;width:auto;flex:none;padding:6px 10px}
-  .faq-nav-btn.on{border-color:var(--cyan)}
+  .faq-nav-btn{border:1px solid var(--border);border-left:2px solid var(--border);width:auto;flex:none;padding:6px 12px;white-space:nowrap}
+  .faq-nav-btn.on{border-color:var(--cyan);border-left-color:var(--cyan)}
   .rev-banner{flex-direction:column;gap:20px}
   footer{flex-direction:column;gap:16px;text-align:center;padding:28px 20px 44px}
 }
@@ -332,14 +332,14 @@ footer{background:var(--bg);border-top:1px solid var(--border);
 <nav id="mainnav">
   <div class="nav-logo">Telco UK <span>×</span> AppsFlyer</div>
   <div class="nav-links">
-    <button onclick="goTo('mmp')">MMP</button>
-    <button onclick="goTo('att')">ATT</button>
-    <button onclick="goTo('deeplink')">Deep Links</button>
-    <button onclick="goTo('deferred')">Deferred DL</button>
-    <button onclick="goTo('growth')">Growth</button>
-    <button onclick="goTo('roadmap')">Roadmap</button>
-    <button onclick="goTo('integrations')" class="lime">Integrations</button>
-    <button onclick="goTo('faq')" class="gold">FAQ</button>
+    <button data-target="mmp">MMP</button>
+    <button data-target="att">ATT</button>
+    <button data-target="deeplink">Deep Links</button>
+    <button data-target="deferred">Deferred DL</button>
+    <button data-target="growth">Growth</button>
+    <button data-target="roadmap">Roadmap</button>
+    <button data-target="integrations">Integrations</button>
+    <button data-target="faq">FAQ</button>
   </div>
   <div class="nav-tag mono">June 2025 · Confidential</div>
 </nav>
@@ -370,8 +370,8 @@ footer{background:var(--bg);border-top:1px solid var(--border);
       <h1>Telco UK ×<br><span class="c">Apps</span><br><span class="l">Flyer</span></h1>
       <p class="hero-sub">From £17.3M misattributed revenue to precision measurement. Complete MMP evaluation, ATT strategy, deep linking and growth roadmap for Telco UK.</p>
       <div class="btn-row">
-        <button class="btn-primary" onclick="goTo('mmp')">Explore Strategy</button>
-        <button class="btn-outline" onclick="goTo('roadmap')">View Roadmap →</button>
+        <button class="btn-primary" data-target="mmp">Explore Strategy</button>
+        <button class="btn-outline" data-target="roadmap">View Roadmap →</button>
       </div>
     </div>
     <div class="stats-panel">
@@ -701,7 +701,7 @@ footer{background:var(--bg);border-top:1px solid var(--border);
         <div class="locker-grid">
           <div class="lcard gcp">
             <div class="lcard-prov">Google Cloud</div><div class="lcard-sub mono">// GCS → BIGQUERY → LOOKER</div>
-            <div class="lstep"><div class="lstep-n mono">01</div><div class="lstep-t"><strong>Grant bucket access:</strong> GCP Console → Cloud Storage → IAM → Add <code>datalake@appsflyer-prod.iam.gserviceaccount.com</code> with Storage Object Admin role</div></div>
+            <div class="lstep"><div class="lstep-n mono">01</div><div class="lstep-t"><strong>Grant bucket access:</strong> GCP Console → Cloud Storage → IAM → Add <code><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="bcd8ddc8ddd0ddd7d9fcddcccccfdad0c5d9ce91ccced3d892d5ddd192dbcfd9cecad5dfd9dddfdfd3c9d2c892dfd3d1">[email&#160;protected]</a></code> with Storage Object Admin role</div></div>
             <div class="lstep"><div class="lstep-n mono">02</div><div class="lstep-t"><strong>Configure in AppsFlyer:</strong> Settings → Data Locker → New Bucket → GCS → Enter bucket name, region europe-west2, folder prefix</div></div>
             <div class="lstep"><div class="lstep-n mono">03</div><div class="lstep-t"><strong>Select report types:</strong> Installs, In-App Events, Uninstalls, Retargeting, Cost, Impressions, Clicks — enable ALL for full data fidelity</div></div>
             <div class="lstep"><div class="lstep-n mono">04</div><div class="lstep-t"><strong>Delivery schedule:</strong> Hourly (recommended). Files land as gzipped CSV partitioned by <code>dt=YYYY-MM-DD/h=HH/</code></div></div>
@@ -829,7 +829,7 @@ footer{background:var(--bg);border-top:1px solid var(--border);
   <div class="footer-conf mono">CONFIDENTIAL</div>
 </footer>
 
-<script>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
 // ============================================================
 // ALL JS — addEventListener only, zero inline handlers except onclick in HTML
 // ============================================================
@@ -844,6 +844,13 @@ function goTo(id) {
   window.scrollTo({ top: top, behavior: 'smooth' });
 }
 
+// Wire up all [data-target] buttons (nav + hero)
+document.querySelectorAll('button[data-target]').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    goTo(this.getAttribute('data-target'));
+  });
+});
+
 // --- ACTIVE NAV HIGHLIGHT ---
 function updateNav() {
   var pos = window.scrollY + 100;
@@ -853,7 +860,8 @@ function updateNav() {
     if (el && pos >= el.offsetTop) current = id;
   });
   document.querySelectorAll('.nav-links button').forEach(function(btn) {
-    var target = btn.getAttribute('onclick').replace("goTo('","").replace("')","");
+    var target = btn.getAttribute('data-target');
+    if (!target) return;
     btn.classList.toggle('active', target === current);
   });
 }
@@ -945,12 +953,4 @@ window.addEventListener('scroll', function() {
   var navBtns = document.querySelectorAll('.faq-nav-btn');
   var activeIdx = 0;
   panels.forEach(function(pid, i) {
-    var p = document.getElementById(pid);
-    if (p && p.getBoundingClientRect().top < 200) activeIdx = i;
-  });
-  navBtns.forEach(function(b) { b.classList.remove('on'); });
-  if (navBtns[activeIdx]) navBtns[activeIdx].classList.add('on');
-}, { passive: true });
-</script>
-</body>
-</html>
+    var p = document.getElementB
