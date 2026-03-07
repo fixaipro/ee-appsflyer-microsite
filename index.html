@@ -798,7 +798,7 @@
       <div class="flow-diagram">
         <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);margin-bottom:20px;letter-spacing:2px">// ONELINK STRUCTURE</div>
         <div class="uri-block" style="margin-bottom:24px">
-          <span class="uri-cyan">https://</span><span class="uri-lime">ee-app</span><span class="uri-muted">.onelink.me/</span><span class="uri-gold">1234</span><span class="uri-muted">/?</span><span class="uri-pink">pid</span>=<span class="uri-cyan">facebook_int</span>&<span class="uri-pink">c</span>=<span class="uri-cyan">upgrade_promo</span>&<span class="uri-pink">deep_link_value</span>=<span class="uri-cyan">upgrade/5G</span>&<span class="uri-pink">af_android_url</span>=<span class="uri-gold">telco://upgrade</span>&<span class="uri-pink">af_ios_url</span>=<span class="uri-gold">telco://upgrade</span>
+          <span class="uri-cyan">https://</span><span class="uri-lime">telcoprovider-app</span><span class="uri-muted">.onelink.me/</span><span class="uri-gold">1234</span><span class="uri-muted">/?</span><span class="uri-pink">pid</span>=<span class="uri-cyan">facebook_int</span>&<span class="uri-pink">c</span>=<span class="uri-cyan">upgrade_promo</span>&<span class="uri-pink">deep_link_value</span>=<span class="uri-cyan">upgrade/5G</span>&<span class="uri-pink">af_android_url</span>=<span class="uri-gold">telco://upgrade</span>&<span class="uri-pink">af_ios_url</span>=<span class="uri-gold">telco://upgrade</span>
         </div>
         <div class="flow-step">
           <div class="step-num">01</div>
@@ -844,7 +844,7 @@
       <div class="explain-card">
         <div class="explain-badge">BRANDED DOMAIN</div>
         <h4>Telco UK CNAME Setup Required</h4>
-        <p>DNS admin configures CNAME: <strong style="color:var(--cyan)">app.telcoprovider.co.uk</strong> → <strong style="color:var(--lime)">telco-app.customlinks.appsflyer.com</strong>. Provides branded link experience with full attribution capability.</p>
+        <p>DNS admin configures CNAME: <strong style="color:var(--cyan)">app.telcoprovider.co.uk</strong> → <strong style="color:var(--lime)">telcoprovider-app.customlinks.appsflyer.com</strong>. Provides branded link experience with full attribution capability.</p>
       </div>
     </div>
   </div>
@@ -865,7 +865,7 @@
           <div class="step-num">02</div>
           <div class="step-content">
             <div class="step-title">Add App Link Intent-Filter</div>
-            <div class="step-text">Auto-generated from AppsFlyer UI → place in AndroidManifest.XML → android:host="telco-app.onelink.me"</div>
+            <div class="step-text">Auto-generated from AppsFlyer UI → place in AndroidManifest.XML → android:host="telcoprovider-app.onelink.me"</div>
           </div>
         </div>
         <div class="flow-step">
@@ -892,7 +892,7 @@
         &nbsp;&nbsp;&lt;category <span class="code-key">android:name</span>=<span class="code-str">"...DEFAULT"</span>/&gt;<br>
         &nbsp;&nbsp;&lt;category <span class="code-key">android:name</span>=<span class="code-str">"...BROWSABLE"</span>/&gt;<br>
         &nbsp;&nbsp;&lt;data<br>
-        &nbsp;&nbsp;&nbsp;&nbsp;<span class="code-key">android:host</span>=<span class="code-str">"telco-app.onelink.me"</span><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="code-key">android:host</span>=<span class="code-str">"telcoprovider-app.onelink.me"</span><br>
         &nbsp;&nbsp;&nbsp;&nbsp;<span class="code-key">android:scheme</span>=<span class="code-str">"https"</span>/&gt;<br>
         &lt;/intent-filter&gt;<br><br>
         <span class="code-comment">// URI Scheme (fallback)</span><br>
@@ -919,14 +919,14 @@
           <div class="step-num">02</div>
           <div class="step-content">
             <div class="step-title">Enable Associated Domains</div>
-            <div class="step-text">Xcode → Capabilities → Associated Domains: applinks:telco-app.onelink.me</div>
+            <div class="step-text">Xcode → Capabilities → Associated Domains: applinks:telcoprovider-app.onelink.me</div>
           </div>
         </div>
         <div class="flow-step">
           <div class="step-num">03</div>
           <div class="step-content">
             <div class="step-title">Configure URI Scheme in Info.plist</div>
-            <div class="step-text">URL Types → Item 0 → URL Schemes → "ee" for telco://deeplink fallback</div>
+            <div class="step-text">URL Types → Item 0 → URL Schemes → "telcoprovider" for telco://deeplink fallback</div>
           </div>
         </div>
         <div class="flow-step">
@@ -1194,7 +1194,6 @@
     if(el){
       const top=el.getBoundingClientRect().top+window.pageYOffset-70;
       window.scrollTo({top:top,behavior:'smooth'});
-      // trigger fade-up for any elements in that section not yet visible
       el.querySelectorAll('.fade-up:not(.visible)').forEach(fu=>{
         fu.classList.add('visible');
         fu.querySelectorAll('[data-target]').forEach(animateCounter);
@@ -1248,9 +1247,7 @@
     entries.forEach(e=>{
       if(e.isIntersecting){
         e.target.classList.add('visible');
-        // counters
         e.target.querySelectorAll('[data-target]').forEach(animateCounter);
-        // score bars
         animateScoreBars(e.target);
         io.unobserve(e.target);
       }
