@@ -1,1273 +1,1080 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Telco UK × AppsFlyer | Mobile Measurement Strategy</title>
-<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;500;600;700&family=DM+Mono:wght@300;400;500&family=Bebas+Neue&display=swap" rel="stylesheet">
-<style>
-  :root {
-    --bg: #060C18;
-    --bg2: #0A1525;
-    --bg3: #0F1E35;
-    --cyan: #00E5C8;
-    --lime: #B8FF00;
-    --gold: #FFB800;
-    --pink: #FF4B7A;
-    --text: #D4EAF0;
-    --muted: #5A7A92;
-    --border: rgba(0,229,200,0.15);
-    --glow: 0 0 30px rgba(0,229,200,0.3);
-  }
-  *{margin:0;padding:0;box-sizing:border-box}
-  html{scroll-behavior:smooth;overflow-x:hidden}
-  body{
-    background:var(--bg);
-    color:var(--text);
-    font-family:'Rajdhani',sans-serif;
-    cursor:none;
-  }
+import { useState, useEffect, useRef } from "react";
 
-  /* ── CURSOR ── */
-  #cursor{position:fixed;width:10px;height:10px;background:var(--cyan);border-radius:50%;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);transition:transform 0.1s;mix-blend-mode:screen}
-  #cursor-ring{position:fixed;width:36px;height:36px;border:1px solid var(--cyan);border-radius:50%;pointer-events:none;z-index:9998;transform:translate(-50%,-50%);transition:all 0.18s ease;opacity:0.5}
+const C = {
+  bg: "#060C18", bg2: "#0A1525", bg3: "#0F1E35",
+  cyan: "#00E5C8", lime: "#B8FF00", gold: "#FFB800", pink: "#FF4B7A",
+  text: "#D4EAF0", muted: "#5A7A92", border: "rgba(0,229,200,0.15)"
+};
 
-  /* ── SCROLLBAR ── */
-  ::-webkit-scrollbar{width:3px}
-  ::-webkit-scrollbar-track{background:var(--bg)}
-  ::-webkit-scrollbar-thumb{background:var(--cyan)}
+const sections = ["hero","mmp","att","deeplink","deferred","growth","roadmap","integrations","faq"];
 
-  /* ── NAV ── */
-  nav{
-    position:fixed;top:0;left:0;right:0;z-index:100;
-    padding:16px 48px;
-    display:flex;align-items:center;justify-content:space-between;
-    background:rgba(6,12,24,0.85);
-    backdrop-filter:blur(20px);
-    border-bottom:1px solid var(--border);
-  }
-  .nav-logo{
-    font-family:'Bebas Neue',sans-serif;
-    font-size:22px;letter-spacing:3px;
-    color:var(--cyan);
-  }
-  .nav-logo span{color:var(--lime)}
-  .nav-links{display:flex;gap:32px}
-  .nav-links a{
-    font-size:12px;letter-spacing:2px;text-transform:uppercase;
-    color:var(--muted);text-decoration:none;
-    transition:color 0.2s;
-  }
-  .nav-links a:hover,.nav-links a.active{color:var(--cyan)}
-  .nav-tag{
-    font-family:'DM Mono',monospace;
-    font-size:11px;color:var(--muted);
-    border:1px solid var(--border);
-    padding:4px 12px;border-radius:2px;
-  }
+// ── Reusable badge
+const Badge = ({ color, children }) => (
+  <span style={{ fontFamily:"monospace", fontSize:9, letterSpacing:2, padding:"2px 8px",
+    border:`1px solid ${color}`, color, display:"inline-block" }}>{children}</span>
+);
 
-  /* ── SECTIONS ── */
-  section{min-height:100vh;padding:120px 64px 80px;position:relative;scroll-margin-top:64px}
+// ── Section wrapper
+const Sec = ({ id, alt, children, style={} }) => (
+  <section id={id} style={{ background: alt ? C.bg2 : C.bg, padding:"80px 48px 64px",
+    minHeight:"auto", scrollMarginTop:56, ...style }}>{children}</Sec>
+);
 
-  /* ── HERO ── */
-  #hero{
-    display:flex;flex-direction:column;justify-content:center;
-    overflow:hidden;
-    padding:0 64px;
-    scroll-margin-top:64px;
-  }
-  .hero-grid{
-    display:grid;grid-template-columns:1fr 1fr;gap:80px;
-    align-items:center;min-height:100vh;
-  }
-  .hero-left{position:relative;z-index:2}
-  .hero-eyebrow{
-    font-family:'DM Mono',monospace;font-size:11px;
-    letter-spacing:3px;color:var(--cyan);text-transform:uppercase;
-    margin-bottom:24px;
-    display:flex;align-items:center;gap:12px;
-  }
-  .hero-eyebrow::before{content:'';width:32px;height:1px;background:var(--cyan)}
-  h1{
-    font-family:'Bebas Neue',sans-serif;
-    font-size:clamp(56px,7vw,96px);
-    line-height:0.9;letter-spacing:2px;
-    color:#fff;margin-bottom:12px;
-  }
-  h1 em{color:var(--cyan);font-style:normal}
-  h1 .line2{color:var(--lime)}
-  .hero-sub{
-    font-size:16px;font-weight:300;color:var(--muted);
-    line-height:1.7;max-width:480px;margin:24px 0 40px;
-  }
-  .hero-ctas{display:flex;gap:16px;flex-wrap:wrap}
-  .btn-primary{
-    padding:12px 28px;background:var(--cyan);color:var(--bg);
-    font-family:'Rajdhani',sans-serif;font-weight:600;
-    font-size:13px;letter-spacing:2px;text-transform:uppercase;
-    text-decoration:none;border:none;cursor:none;
-    transition:all 0.2s;clip-path:polygon(0 0,calc(100% - 12px) 0,100% 12px,100% 100%,0 100%);
-  }
-  .btn-primary:hover{background:var(--lime);transform:translateY(-2px)}
-  .btn-ghost{
-    padding:12px 28px;border:1px solid var(--border);
-    color:var(--text);font-family:'Rajdhani',sans-serif;font-weight:500;
-    font-size:13px;letter-spacing:2px;text-transform:uppercase;
-    text-decoration:none;transition:all 0.2s;
-    clip-path:polygon(0 0,calc(100% - 12px) 0,100% 12px,100% 100%,0 100%);
-  }
-  .btn-ghost:hover{border-color:var(--cyan);color:var(--cyan)}
-
-  /* Hero right - stats panel */
-  .hero-right{position:relative}
-  .stats-panel{
-    background:var(--bg2);
-    border:1px solid var(--border);
-    padding:40px;
-    clip-path:polygon(0 0,100% 0,100% calc(100% - 20px),calc(100% - 20px) 100%,0 100%);
-    position:relative;overflow:hidden;
-  }
-  .stats-panel::before{
-    content:'';position:absolute;top:0;right:0;
-    width:200px;height:200px;
-    background:radial-gradient(circle,rgba(0,229,200,0.1),transparent);
-    border-radius:50%;
-  }
-  .stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px}
-  .stat-item{padding:20px;border:1px solid var(--border);position:relative;overflow:hidden}
-  .stat-item::after{
-    content:'';position:absolute;bottom:0;left:0;right:0;height:2px;
-    background:var(--cyan);transform:scaleX(0);transform-origin:left;
-    transition:transform 0.6s ease;
-  }
-  .stat-item:hover::after{transform:scaleX(1)}
-  .stat-number{
-    font-family:'Bebas Neue',sans-serif;font-size:48px;
-    color:var(--cyan);line-height:1;
-  }
-  .stat-number.gold{color:var(--gold)}
-  .stat-number.lime{color:var(--lime)}
-  .stat-number.pink{color:var(--pink)}
-  .stat-label{font-size:12px;color:var(--muted);margin-top:4px;letter-spacing:1px;line-height:1.4}
-  .panel-tag{
-    font-family:'DM Mono',monospace;font-size:10px;
-    color:var(--muted);margin-bottom:24px;letter-spacing:2px;
-  }
-
-  /* Ticker */
-  .ticker-wrap{
-    position:absolute;bottom:0;left:0;right:0;
-    background:var(--cyan);overflow:hidden;height:32px;
-    display:flex;align-items:center;
-  }
-  .ticker{
-    display:flex;gap:48px;white-space:nowrap;
-    animation:ticker 30s linear infinite;
-    font-family:'DM Mono',monospace;font-size:11px;
-    color:var(--bg);font-weight:500;letter-spacing:2px;
-  }
-  @keyframes ticker{from{transform:translateX(0)}to{transform:translateX(-50%)}}
-  .tick-sep{color:rgba(6,12,24,0.4)}
-
-  /* Background grid */
-  .bg-grid{
-    position:fixed;top:0;left:0;right:0;bottom:0;
-    background-image:
-      linear-gradient(rgba(0,229,200,0.03) 1px,transparent 1px),
-      linear-gradient(90deg,rgba(0,229,200,0.03) 1px,transparent 1px);
-    background-size:60px 60px;
-    pointer-events:none;z-index:0;
-  }
-  .bg-orb{
-    position:fixed;width:600px;height:600px;border-radius:50%;
-    background:radial-gradient(circle,rgba(0,229,200,0.05),transparent 70%);
-    pointer-events:none;z-index:0;
-    animation:orb-float 20s ease-in-out infinite;
-  }
-  .bg-orb.orb2{
-    right:-200px;bottom:-200px;
-    background:radial-gradient(circle,rgba(184,255,0,0.04),transparent 70%);
-    animation-delay:-10s;
-  }
-  @keyframes orb-float{
-    0%,100%{transform:translate(0,0)}
-    50%{transform:translate(30px,20px)}
-  }
-
-  /* ── SECTION HEADERS ── */
-  .section-header{margin-bottom:64px}
-  .section-num{
-    font-family:'DM Mono',monospace;font-size:11px;
-    color:var(--cyan);letter-spacing:3px;margin-bottom:8px;
-  }
-  h2{
-    font-family:'Bebas Neue',sans-serif;
-    font-size:clamp(40px,5vw,72px);
-    letter-spacing:2px;color:#fff;line-height:1;
-  }
-  h2 span{color:var(--cyan)}
-  .section-desc{
-    font-size:15px;color:var(--muted);
-    max-width:600px;margin-top:16px;line-height:1.7;
-  }
-
-  /* ── MMP SECTION ── */
-  #mmp{background:var(--bg)}
-  .score-board{
-    display:grid;grid-template-columns:1fr 1fr;gap:32px;margin-bottom:48px;
-  }
-  .score-card{
-    background:var(--bg2);border:1px solid var(--border);
-    padding:40px;position:relative;overflow:hidden;
-    transition:border-color 0.3s,transform 0.3s;
-  }
-  .score-card:hover{border-color:var(--cyan);transform:translateY(-4px)}
-  .score-card.winner{border-color:var(--cyan)}
-  .score-card.winner::before{
-    content:'WINNER';
-    position:absolute;top:16px;right:16px;
-    font-family:'DM Mono',monospace;font-size:9px;
-    letter-spacing:2px;background:var(--cyan);color:var(--bg);
-    padding:3px 8px;
-  }
-  .score-card-title{font-size:11px;letter-spacing:3px;color:var(--muted);margin-bottom:8px}
-  .score-card-name{
-    font-family:'Bebas Neue',sans-serif;font-size:36px;color:#fff;
-    margin-bottom:24px;
-  }
-  .score-bar-wrap{margin-bottom:16px}
-  .score-bar-label{
-    display:flex;justify-content:space-between;
-    font-size:12px;color:var(--muted);margin-bottom:6px;
-  }
-  .score-bar-label span:last-child{color:var(--text)}
-  .score-bar{height:4px;background:rgba(255,255,255,0.08);overflow:hidden}
-  .score-bar-fill{height:100%;background:var(--cyan);transform:scaleX(0);transform-origin:left;transition:transform 1.2s cubic-bezier(0.4,0,0.2,1)}
-  .score-bar-fill.gold{background:var(--gold)}
-  .score-bar-fill.lime{background:var(--lime)}
-  .score-total{
-    margin-top:24px;padding-top:24px;border-top:1px solid var(--border);
-    display:flex;justify-content:space-between;align-items:baseline;
-  }
-  .score-total-label{font-size:11px;color:var(--muted);letter-spacing:2px}
-  .score-total-num{
-    font-family:'Bebas Neue',sans-serif;font-size:48px;color:var(--cyan);
-  }
-
-  .rfi-categories{
-    display:grid;grid-template-columns:repeat(3,1fr);gap:16px;
-  }
-  .rfi-cat{
-    background:var(--bg2);border:1px solid var(--border);
-    padding:20px;font-size:13px;color:var(--muted);
-    letter-spacing:1px;
-    display:flex;align-items:center;gap:12px;
-    transition:all 0.2s;
-  }
-  .rfi-cat:hover{border-color:var(--lime);color:var(--text)}
-  .rfi-cat::before{
-    content:'';width:6px;height:6px;
-    background:var(--lime);border-radius:50%;flex-shrink:0;
-  }
-
-  /* ── ATT SECTION ── */
-  #att{background:var(--bg2)}
-  .att-grid{display:grid;grid-template-columns:3fr 2fr;gap:64px;align-items:start}
-  .att-flow{display:flex;flex-direction:column;gap:0}
-  .flow-item{
-    display:grid;grid-template-columns:80px 1fr;gap:24px;
-    padding:24px 0;border-bottom:1px solid var(--border);
-    position:relative;
-  }
-  .flow-icon{
-    width:56px;height:56px;
-    border:1px solid var(--border);
-    display:flex;align-items:center;justify-content:center;
-    font-family:'Bebas Neue',sans-serif;font-size:20px;color:var(--cyan);
-    flex-shrink:0;
-  }
-  .flow-title{font-size:16px;font-weight:600;color:#fff;margin-bottom:6px}
-  .flow-text{font-size:14px;color:var(--muted);line-height:1.6}
-  .flow-tag{
-    display:inline-block;margin-top:8px;
-    font-family:'DM Mono',monospace;font-size:10px;
-    letter-spacing:2px;padding:3px 8px;
-    border:1px solid;
-  }
-  .flow-tag.opt-in{border-color:var(--lime);color:var(--lime)}
-  .flow-tag.opt-out{border-color:var(--pink);color:var(--pink)}
-
-  .att-stats-stack{display:flex;flex-direction:column;gap:16px}
-  .att-stat-big{
-    background:var(--bg);border:1px solid var(--border);
-    padding:32px;text-align:center;
-    clip-path:polygon(0 0,100% 0,100% calc(100% - 16px),calc(100% - 16px) 100%,0 100%);
-  }
-  .att-stat-big .n{
-    font-family:'Bebas Neue',sans-serif;font-size:64px;line-height:1;
-  }
-  .att-stat-big .n.cyan{color:var(--cyan)}
-  .att-stat-big .n.gold{color:var(--gold)}
-  .att-stat-big .n.pink{color:var(--pink)}
-  .att-stat-big .l{font-size:12px;color:var(--muted);letter-spacing:2px;margin-top:4px}
-
-  /* ── DEEP LINKING SECTION ── */
-  #deeplink{background:var(--bg)}
-  .dl-tabs{display:flex;gap:2px;margin-bottom:40px;border-bottom:1px solid var(--border)}
-  .dl-tab{
-    padding:12px 24px;font-size:12px;letter-spacing:2px;text-transform:uppercase;
-    color:var(--muted);cursor:none;transition:all 0.2s;
-    border-bottom:2px solid transparent;margin-bottom:-1px;
-  }
-  .dl-tab.active,.dl-tab:hover{color:var(--cyan);border-bottom-color:var(--cyan)}
-  .dl-panel{display:none}
-  .dl-panel.active{display:grid;grid-template-columns:1fr 1fr;gap:48px}
-
-  .flow-diagram{
-    background:var(--bg2);border:1px solid var(--border);
-    padding:32px;
-  }
-  .flow-step{
-    display:flex;align-items:flex-start;gap:16px;
-    padding:16px 0;border-bottom:1px solid var(--border);
-  }
-  .flow-step:last-child{border-bottom:none}
-  .step-num{
-    width:32px;height:32px;border:1px solid var(--cyan);
-    display:flex;align-items:center;justify-content:center;
-    font-family:'DM Mono',monospace;font-size:12px;color:var(--cyan);
-    flex-shrink:0;
-  }
-  .step-content .step-title{font-size:14px;font-weight:600;color:#fff;margin-bottom:4px}
-  .step-content .step-text{font-size:13px;color:var(--muted);line-height:1.5}
-
-  .code-block{
-    background:#020810;border:1px solid var(--border);
-    padding:24px;font-family:'DM Mono',monospace;font-size:12px;
-    line-height:1.8;overflow-x:auto;
-    position:relative;
-  }
-  .code-block::before{
-    content:'PAYLOAD';position:absolute;top:12px;right:16px;
-    font-size:9px;letter-spacing:2px;color:var(--muted);
-  }
-  .code-key{color:var(--cyan)}
-  .code-val{color:var(--lime)}
-  .code-str{color:var(--gold)}
-  .code-comment{color:var(--muted)}
-  .uri-block{
-    background:#020810;border:1px solid var(--border);
-    padding:20px;font-family:'DM Mono',monospace;font-size:11px;
-    line-height:1.8;word-break:break-all;
-  }
-  .uri-cyan{color:var(--cyan)}
-  .uri-lime{color:var(--lime)}
-  .uri-gold{color:var(--gold)}
-  .uri-pink{color:var(--pink)}
-  .uri-muted{color:var(--muted)}
-
-  .dl-explain{display:flex;flex-direction:column;gap:20px}
-  .explain-card{
-    background:var(--bg2);border:1px solid var(--border);
-    padding:24px;transition:all 0.3s;
-  }
-  .explain-card:hover{border-color:var(--cyan)}
-  .explain-card h4{font-size:14px;font-weight:600;color:#fff;margin-bottom:8px}
-  .explain-card p{font-size:13px;color:var(--muted);line-height:1.6}
-  .explain-badge{
-    display:inline-block;font-family:'DM Mono',monospace;
-    font-size:9px;letter-spacing:2px;padding:2px 8px;
-    background:rgba(0,229,200,0.1);color:var(--cyan);
-    border:1px solid rgba(0,229,200,0.3);margin-bottom:8px;
-  }
-  .explain-badge.gold{background:rgba(255,184,0,0.1);color:var(--gold);border-color:rgba(255,184,0,0.3)}
-
-  /* ── DEFERRED SECTION ── */
-  #deferred{background:var(--bg2)}
-  .deferred-grid{display:grid;grid-template-columns:1fr 1fr;gap:48px}
-  .method-card{
-    background:var(--bg);border:1px solid var(--border);
-    padding:32px;transition:all 0.3s;
-  }
-  .method-card:hover{border-color:var(--cyan);transform:translateY(-4px)}
-  .method-icon{
-    width:48px;height:48px;border:1px solid var(--border);
-    display:flex;align-items:center;justify-content:center;
-    font-family:'DM Mono',monospace;font-size:14px;color:var(--cyan);
-    margin-bottom:20px;
-  }
-  .method-name{
-    font-family:'Bebas Neue',sans-serif;font-size:28px;
-    color:#fff;margin-bottom:4px;
-  }
-  .method-sub{font-size:12px;color:var(--muted);letter-spacing:2px;margin-bottom:20px}
-  .method-list{display:flex;flex-direction:column;gap:8px}
-  .method-list li{
-    font-size:13px;color:var(--muted);
-    display:flex;align-items:flex-start;gap:8px;line-height:1.5;
-    list-style:none;
-  }
-  .method-list li::before{content:'→';color:var(--cyan);flex-shrink:0}
-
-  .logic-block{
-    background:#020810;border:1px solid var(--border);
-    padding:24px;font-family:'DM Mono',monospace;
-    font-size:12px;line-height:2;margin-top:24px;
-  }
-  .logic-kw{color:var(--pink)}
-  .logic-var{color:var(--cyan)}
-  .logic-str{color:var(--gold)}
-  .logic-cmt{color:var(--muted)}
-
-  /* ── ONE SCREEN SECTION ── */
-  #onescreen{background:var(--bg)}
-  .os-pillars{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;margin-bottom:48px}
-  .pillar{
-    background:var(--bg2);border:1px solid var(--border);
-    padding:28px 20px;text-align:center;
-    transition:all 0.3s;position:relative;overflow:hidden;
-  }
-  .pillar::before{
-    content:'';position:absolute;bottom:0;left:0;right:0;
-    height:3px;transform:scaleX(0);transform-origin:center;
-    transition:transform 0.4s ease;
-  }
-  .pillar.c1::before{background:var(--cyan)}
-  .pillar.c2::before{background:var(--lime)}
-  .pillar.c3::before{background:var(--gold)}
-  .pillar.c4::before{background:var(--pink)}
-  .pillar:hover::before{transform:scaleX(1)}
-  .pillar:hover{transform:translateY(-6px)}
-  .pillar-icon{
-    font-family:'Bebas Neue',sans-serif;font-size:32px;
-    margin-bottom:12px;
-  }
-  .pillar.c1 .pillar-icon{color:var(--cyan)}
-  .pillar.c2 .pillar-icon{color:var(--lime)}
-  .pillar.c3 .pillar-icon{color:var(--gold)}
-  .pillar.c4 .pillar-icon{color:var(--pink)}
-  .pillar h3{font-size:15px;font-weight:600;color:#fff;margin-bottom:8px}
-  .pillar p{font-size:12px;color:var(--muted);line-height:1.5}
-
-  .revenue-banner{
-    background:linear-gradient(135deg,rgba(0,229,200,0.08),rgba(184,255,0,0.04));
-    border:1px solid var(--border);
-    padding:40px;display:flex;align-items:center;gap:48px;
-    position:relative;overflow:hidden;
-  }
-  .revenue-banner::after{
-    content:'';position:absolute;right:-100px;top:-100px;
-    width:300px;height:300px;border-radius:50%;
-    background:radial-gradient(circle,rgba(0,229,200,0.08),transparent);
-  }
-  .rev-big{
-    font-family:'Bebas Neue',sans-serif;font-size:80px;
-    color:var(--cyan);line-height:1;flex-shrink:0;
-  }
-  .rev-text h3{font-size:20px;font-weight:600;color:#fff;margin-bottom:8px}
-  .rev-text p{font-size:14px;color:var(--muted);line-height:1.6;max-width:500px}
-  .rev-badge{
-    font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;
-    background:rgba(255,75,122,0.1);color:var(--pink);
-    border:1px solid rgba(255,75,122,0.3);
-    padding:4px 10px;display:inline-block;margin-bottom:8px;
-  }
-
-  /* ── ROADMAP ── */
-  #roadmap{background:var(--bg2)}
-  .roadmap-timeline{position:relative;padding-left:40px}
-  .roadmap-timeline::before{
-    content:'';position:absolute;left:8px;top:0;bottom:0;
-    width:1px;background:linear-gradient(var(--cyan),var(--lime),transparent);
-  }
-  .road-item{
-    position:relative;margin-bottom:40px;
-  }
-  .road-item::before{
-    content:'';position:absolute;left:-38px;top:8px;
-    width:14px;height:14px;
-    border:2px solid var(--cyan);background:var(--bg2);
-    border-radius:50%;
-  }
-  .road-phase{
-    font-family:'DM Mono',monospace;font-size:10px;
-    color:var(--cyan);letter-spacing:3px;margin-bottom:6px;
-  }
-  .road-title{font-size:18px;font-weight:600;color:#fff;margin-bottom:8px}
-  .road-items{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:16px}
-  .road-chip{
-    background:var(--bg);border:1px solid var(--border);
-    padding:12px 16px;font-size:12px;color:var(--muted);
-    letter-spacing:1px;transition:all 0.2s;
-  }
-  .road-chip:hover{border-color:var(--cyan);color:var(--text)}
-
-  /* ── FOOTER ── */
-  footer{
-    background:var(--bg);border-top:1px solid var(--border);
-    padding:48px 64px;
-    display:flex;justify-content:space-between;align-items:center;
-  }
-  .foot-logo{
-    font-family:'Bebas Neue',sans-serif;font-size:24px;
-    letter-spacing:3px;color:var(--cyan);
-  }
-  .foot-logo span{color:var(--lime)}
-  .foot-meta{
-    font-family:'DM Mono',monospace;font-size:11px;
-    color:var(--muted);letter-spacing:2px;
-  }
-
-  /* ── FADE-UP ANIMATION ── */
-  .fade-up{opacity:0;transform:translateY(40px);transition:opacity 0.7s ease,transform 0.7s ease}
-  .fade-up.visible{opacity:1;transform:translateY(0)}
-  .fade-up.d1{transition-delay:0.1s}
-  .fade-up.d2{transition-delay:0.2s}
-  .fade-up.d3{transition-delay:0.3s}
-  .fade-up.d4{transition-delay:0.4s}
-
-  /* ── RESPONSIVE ── */
-  @media(max-width:960px){
-    nav .nav-links{display:none}
-    section{padding:100px 24px 60px}
-    .hero-grid,.att-grid,.deferred-grid,.dl-panel.active{grid-template-columns:1fr}
-    .score-board,.rfi-categories,.os-pillars,.road-items{grid-template-columns:1fr}
-    footer{flex-direction:column;gap:16px;text-align:center}
-    .revenue-banner{flex-direction:column;gap:24px}
-    .hero-left h1{font-size:48px}
-  }
-</style>
-</head>
-<body>
-
-<div id="cursor"></div>
-<div id="cursor-ring"></div>
-<div class="bg-grid"></div>
-<div class="bg-orb" style="left:-200px;top:-200px"></div>
-<div class="bg-orb orb2"></div>
-
-<!-- NAV -->
-<nav id="main-nav">
-  <div class="nav-logo">Telco UK <span>×</span> AppsFlyer</div>
-  <div class="nav-links">
-    <a href="javascript:void(0)" onclick="goTo('mmp')">MMP</a>
-    <a href="javascript:void(0)" onclick="goTo('att')">ATT</a>
-    <a href="javascript:void(0)" onclick="goTo('deeplink')">Deep Links</a>
-    <a href="javascript:void(0)" onclick="goTo('deferred')">Deferred DL</a>
-    <a href="javascript:void(0)" onclick="goTo('onescreen')">Growth</a>
-    <a href="javascript:void(0)" onclick="goTo('roadmap')">Roadmap</a>
+// ── Section header
+const SH = ({ num, title, accent, desc }) => (
+  <div style={{ marginBottom:40 }}>
+    <div style={{ fontFamily:"monospace", fontSize:11, color:C.cyan, letterSpacing:3, marginBottom:8 }}>{num}</div>
+    <h2 style={{ fontFamily:"Georgia,serif", fontSize:"clamp(36px,4vw,60px)", color:"#fff",
+      lineHeight:1, letterSpacing:1, margin:0 }}>
+      {title} <span style={{ color:C.cyan }}>{accent}</span>
+    </h2>
+    {desc && <p style={{ fontSize:14, color:C.muted, maxWidth:600, marginTop:12, lineHeight:1.7 }}>{desc}</p>}
   </div>
-  <div class="nav-tag">June 2025 · Confidential</div>
-</nav>
+);
 
-<!-- TICKER -->
-<div class="ticker-wrap" style="position:fixed;bottom:0;z-index:50">
-  <div class="ticker">
-    <span>AppsFlyer Wins RFI by 35%</span><span class="tick-sep">◆</span>
-    <span>AppsFlyer Wins RFP by 42%</span><span class="tick-sep">◆</span>
-    <span>£17.3M Revenue Misattributed Without MMP</span><span class="tick-sep">◆</span>
-    <span>iOS Drives 69% App Revenue at Telco UK</span><span class="tick-sep">◆</span>
-    <span>ATT Opt-In Unlocks 5-10% Incremental Growth</span><span class="tick-sep">◆</span>
-    <span>55% ATT Opt-Out: Strategic Dilemma</span><span class="tick-sep">◆</span>
-    <span>9M App Users — 7.5M Dormant</span><span class="tick-sep">◆</span>
-    <span>OneLink: 90% Open Rates · 28% Conversion</span><span class="tick-sep">◆</span>
-    <span>UDL + GCD: Both Required for Deferred Deep Linking</span><span class="tick-sep">◆</span>
-    <!-- repeat for seamless loop -->
-    <span>AppsFlyer Wins RFI by 35%</span><span class="tick-sep">◆</span>
-    <span>AppsFlyer Wins RFP by 42%</span><span class="tick-sep">◆</span>
-    <span>£17.3M Revenue Misattributed Without MMP</span><span class="tick-sep">◆</span>
-    <span>iOS Drives 69% App Revenue at Telco UK</span><span class="tick-sep">◆</span>
-    <span>ATT Opt-In Unlocks 5-10% Incremental Growth</span><span class="tick-sep">◆</span>
-    <span>55% ATT Opt-Out: Strategic Dilemma</span><span class="tick-sep">◆</span>
-    <span>9M App Users — 7.5M Dormant</span><span class="tick-sep">◆</span>
-    <span>OneLink: 90% Open Rates · 28% Conversion</span><span class="tick-sep">◆</span>
-    <span>UDL + GCD: Both Required for Deferred Deep Linking</span><span class="tick-sep">◆</span>
-  </div>
-</div>
+// ── Nav
+function Nav({ active, onNav }) {
+  const navItems = [
+    { id:"mmp", label:"MMP" }, { id:"att", label:"ATT" },
+    { id:"deeplink", label:"Deep Links" }, { id:"deferred", label:"Deferred DL" },
+    { id:"growth", label:"Growth" }, { id:"roadmap", label:"Roadmap" },
+    { id:"integrations", label:"Integrations", color:C.lime },
+    { id:"faq", label:"FAQ", color:C.gold },
+  ];
+  return (
+    <nav style={{ position:"fixed", top:0, left:0, right:0, zIndex:9999,
+      background:"rgba(6,12,24,0.97)", borderBottom:`1px solid ${C.border}`,
+      padding:"10px 32px", display:"flex", alignItems:"center", justifyContent:"space-between",
+      backdropFilter:"blur(20px)" }}>
+      <div style={{ fontFamily:"Georgia,serif", fontSize:18, color:C.cyan, letterSpacing:2, flexShrink:0 }}>
+        Telco UK <span style={{ color:C.lime }}>×</span> AppsFlyer
+      </div>
+      <div style={{ display:"flex", gap:16, flexWrap:"wrap" }}>
+        {navItems.map(n => (
+          <button key={n.id} onClick={() => onNav(n.id)}
+            style={{ background:"none", border:"none", padding:"4px 0",
+              fontFamily:"monospace", fontSize:10, letterSpacing:2, textTransform:"uppercase",
+              color: active===n.id ? C.cyan : (n.color || C.muted),
+              cursor:"pointer", transition:"color .2s",
+              borderBottom: active===n.id ? `1px solid ${C.cyan}` : "1px solid transparent" }}>
+            {n.label}
+          </button>
+        ))}
+      </div>
+      <div style={{ fontFamily:"monospace", fontSize:9, color:C.muted,
+        border:`1px solid ${C.border}`, padding:"3px 10px", flexShrink:0 }}>
+        June 2025 · Confidential
+      </div>
+    </nav>
+  );
+}
 
-<!-- ══════════════════ HERO ══════════════════ -->
-<section id="hero">
-  <div class="hero-grid">
-    <div class="hero-left">
-      <div class="hero-eyebrow fade-up">Mobile Measurement Strategy · June 2025</div>
-      <h1 class="fade-up d1">
-        Telco UK ×<br>
-        <em>Apps</em><br>
-        <span class="line2">Flyer</span>
-      </h1>
-      <p class="hero-sub fade-up d2">
-        From £17.3M misattributed revenue to precision measurement. A complete MMP evaluation, ATT deployment strategy, deep linking implementation, and growth roadmap for Telco UK's app ecosystem.
-      </p>
-      <div class="hero-ctas fade-up d3">
-        <a href="javascript:void(0)" onclick="goTo('mmp')" class="btn-primary">Explore Strategy</a>
-        <a href="javascript:void(0)" onclick="goTo('roadmap')" class="btn-ghost">View Roadmap →</a>
-      </div>
-    </div>
-    <div class="hero-right fade-up d2">
-      <div class="stats-panel">
-        <div class="panel-tag">// KEY_METRICS :: TELCO_UK_APP_2025</div>
-        <div class="stats-grid">
-          <div class="stat-item">
-            <div class="stat-number" data-target="17.3">0</div>
-            <div class="stat-label">£M Revenue Misattributed (12 months)</div>
-          </div>
-          <div class="stat-item">
-            <div class="stat-number gold" data-target="69">0</div>
-            <div class="stat-label">% iOS Share of App Revenue</div>
-          </div>
-          <div class="stat-item">
-            <div class="stat-number lime" data-target="42">0</div>
-            <div class="stat-label">% AppsFlyer RFP Lead vs Competitors</div>
-          </div>
-          <div class="stat-item">
-            <div class="stat-number pink" data-target="83">0</div>
-            <div class="stat-label">% of 9M App Users Currently Dormant</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ══════════════════ MMP ══════════════════ -->
-<section id="mmp">
-  <div class="section-header fade-up">
-    <div class="section-num">// 01 · MMP EVALUATION</div>
-    <h2>RFI & RFP <span>Results</span></h2>
-    <p class="section-desc">100+ RFI responses across 9 categories. 5-vendor RFP across financial, expertise, innovation and after-sales dimensions. One clear winner.</p>
-  </div>
-
-  <div class="score-board fade-up">
-    <div class="score-card winner">
-      <div class="score-card-title">// TOP PERFORMER</div>
-      <div class="score-card-name">AppsFlyer</div>
-      <div class="score-bar-wrap">
-        <div class="score-bar-label"><span>Attribution Accuracy</span><span>98/100</span></div>
-        <div class="score-bar"><div class="score-bar-fill" data-width="98"></div></div>
-      </div>
-      <div class="score-bar-wrap">
-        <div class="score-bar-label"><span>Deep Links</span><span>96/100</span></div>
-        <div class="score-bar"><div class="score-bar-fill" data-width="96"></div></div>
-      </div>
-      <div class="score-bar-wrap">
-        <div class="score-bar-label"><span>Ad Fraud Prevention</span><span>94/100</span></div>
-        <div class="score-bar"><div class="score-bar-fill" data-width="94"></div></div>
-      </div>
-      <div class="score-bar-wrap">
-        <div class="score-bar-label"><span>Data Privacy & Security</span><span>97/100</span></div>
-        <div class="score-bar"><div class="score-bar-fill" data-width="97"></div></div>
-      </div>
-      <div class="score-bar-wrap">
-        <div class="score-bar-label"><span>Reporting & Insights</span><span>95/100</span></div>
-        <div class="score-bar"><div class="score-bar-fill" data-width="95"></div></div>
-      </div>
-      <div class="score-total">
-        <div class="score-total-label">RFI LEAD</div>
-        <div class="score-total-num">+35%</div>
-      </div>
-    </div>
-    <div style="display:flex;flex-direction:column;gap:16px">
-      <div class="score-card">
-        <div class="score-card-title">// RUNNER UP</div>
-        <div class="score-card-name">Adjust</div>
-        <div class="score-bar-wrap">
-          <div class="score-bar-label"><span>Overall Score</span><span>71/100</span></div>
-          <div class="score-bar"><div class="score-bar-fill gold" data-width="71"></div></div>
-        </div>
-        <div class="score-total">
-          <div class="score-total-label">RFP LEAD (AF)</div>
-          <div class="score-total-num" style="color:var(--gold)">+42%</div>
-        </div>
-      </div>
-      <div class="score-card" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;padding:24px">
-        <div style="text-align:center">
-          <div style="font-family:'Bebas Neue',sans-serif;font-size:20px;color:var(--muted)">Branch</div>
-          <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);margin-top:4px">63/100</div>
-        </div>
-        <div style="text-align:center">
-          <div style="font-family:'Bebas Neue',sans-serif;font-size:20px;color:var(--muted)">Singular</div>
-          <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);margin-top:4px">58/100</div>
-        </div>
-        <div style="text-align:center">
-          <div style="font-family:'Bebas Neue',sans-serif;font-size:20px;color:var(--muted)">Kochava</div>
-          <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);margin-top:4px">52/100</div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="section-header fade-up" style="margin-top:64px;margin-bottom:24px">
-    <div class="section-num">// RFI CATEGORIES ASSESSED</div>
-  </div>
-  <div class="rfi-categories fade-up">
-    <div class="rfi-cat">Attribution Accuracy</div>
-    <div class="rfi-cat">Deep Links</div>
-    <div class="rfi-cat">Owned Channels</div>
-    <div class="rfi-cat">CTV & Gaming Consoles</div>
-    <div class="rfi-cat">Data Privacy & Security Compliance</div>
-    <div class="rfi-cat">Ad Fraud Prevention</div>
-    <div class="rfi-cat">Data Clean Room</div>
-    <div class="rfi-cat">Reporting & Insights</div>
-    <div class="rfi-cat">Operations & Customer Support</div>
-  </div>
-</section>
-
-<!-- ══════════════════ ATT ══════════════════ -->
-<section id="att">
-  <div class="section-header fade-up">
-    <div class="section-num">// 02 · ATT BUSINESS CASE</div>
-    <h2>The ATT <span>Imperative</span></h2>
-    <p class="section-desc">With 55% iOS opt-out, is ATT worth pursuing? Yes — the downstream value far outweighs deployment friction. iOS drives 69% of Telco UK app revenue and is non-negotiable.</p>
-  </div>
-
-  <div class="att-grid">
-    <div class="att-flow fade-up">
-      <div class="flow-item">
-        <div class="flow-icon">OPT+</div>
+// ── Hero
+function Hero({ onNav }) {
+  const stats = [
+    { n:"£17.3M", l:"Revenue Misattributed (12 months)", c:C.cyan },
+    { n:"69%", l:"iOS Share of App Revenue", c:C.gold },
+    { n:"42%", l:"AppsFlyer RFP Lead vs Competitors", c:C.lime },
+    { n:"83%", l:"of 9M App Users Currently Dormant", c:C.pink },
+  ];
+  return (
+    <Sec id="hero" style={{ padding:"100px 48px 64px", minHeight:"100vh", display:"flex", alignItems:"center" }}>
+      <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:64, alignItems:"center", width:"100%" }}>
         <div>
-          <div class="flow-title">ATT Opt-In: Deterministic Attribution</div>
-          <div class="flow-text">Real-time IDFA enables full campaign reporting broken by media strategy, format, and creative. Unlocks ML/LLM models for NBA prediction, fraud prevention, LTV cohorts, and in-platform bid optimization across PDP, PCP, Add-to-Cart, Revenue and Checkout events.</div>
-          <span class="flow-tag opt-in">45% CONSENT RATE</span>
+          <div style={{ fontFamily:"monospace", fontSize:10, color:C.cyan, letterSpacing:3,
+            marginBottom:20, display:"flex", alignItems:"center", gap:12 }}>
+            <span style={{ display:"inline-block", width:28, height:1, background:C.cyan }} />
+            Mobile Measurement Strategy · June 2025
+          </div>
+          <h1 style={{ fontFamily:"Georgia,serif", fontSize:"clamp(52px,6vw,84px)", lineHeight:.9,
+            color:"#fff", margin:"0 0 24px" }}>
+            Telco UK ×<br/><span style={{ color:C.cyan }}>Apps</span><br/>
+            <span style={{ color:C.lime }}>Flyer</span>
+          </h1>
+          <p style={{ fontSize:15, color:C.muted, lineHeight:1.7, maxWidth:480, margin:"0 0 32px" }}>
+            From £17.3M misattributed revenue to precision measurement. A complete MMP evaluation,
+            ATT strategy, deep linking implementation and growth roadmap.
+          </p>
+          <div style={{ display:"flex", gap:14 }}>
+            <button onClick={() => onNav("mmp")} style={{ padding:"11px 26px", background:C.cyan,
+              color:C.bg, fontFamily:"monospace", fontSize:11, letterSpacing:2, textTransform:"uppercase",
+              border:"none", cursor:"pointer", fontWeight:700 }}>
+              Explore Strategy
+            </button>
+            <button onClick={() => onNav("roadmap")} style={{ padding:"11px 26px", background:"transparent",
+              color:C.text, fontFamily:"monospace", fontSize:11, letterSpacing:2, textTransform:"uppercase",
+              border:`1px solid ${C.border}`, cursor:"pointer" }}>
+              View Roadmap →
+            </button>
+          </div>
+        </div>
+        <div style={{ background:C.bg2, border:`1px solid ${C.border}`, padding:36 }}>
+          <div style={{ fontFamily:"monospace", fontSize:9, color:C.muted, letterSpacing:2, marginBottom:20 }}>
+            // KEY_METRICS :: TELCO_UK_APP_2025
+          </div>
+          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:14 }}>
+            {stats.map((s,i) => (
+              <div key={i} style={{ padding:18, border:`1px solid ${C.border}` }}>
+                <div style={{ fontFamily:"Georgia,serif", fontSize:42, color:s.c, lineHeight:1 }}>{s.n}</div>
+                <div style={{ fontSize:11, color:C.muted, marginTop:4, lineHeight:1.4 }}>{s.l}</div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
-      <div class="flow-item">
-        <div class="flow-icon">OPT−</div>
+    </Sec>
+  );
+}
+
+// ── MMP Section
+function MMP() {
+  const bars = [
+    { l:"Attribution Accuracy", v:98 }, { l:"Deep Links", v:96 },
+    { l:"Ad Fraud Prevention", v:94 }, { l:"Data Privacy & Security", v:97 }, { l:"Reporting & Insights", v:95 }
+  ];
+  return (
+    <Sec id="mmp" alt>
+      <SH num="// 01 · MMP EVALUATION" title="RFI & RFP" accent="Results"
+        desc="100+ RFI responses across 9 categories. 5-vendor RFP. One clear winner." />
+      <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:24, marginBottom:40 }}>
+        <div style={{ background:C.bg, border:`2px solid ${C.cyan}`, padding:32, position:"relative" }}>
+          <div style={{ position:"absolute", top:12, right:12, fontFamily:"monospace", fontSize:9,
+            background:C.cyan, color:C.bg, padding:"2px 8px", letterSpacing:2 }}>WINNER</div>
+          <div style={{ fontSize:10, color:C.muted, letterSpacing:3, marginBottom:6 }}>// TOP PERFORMER</div>
+          <div style={{ fontFamily:"Georgia,serif", fontSize:32, color:"#fff", marginBottom:20 }}>AppsFlyer</div>
+          {bars.map((b,i) => (
+            <div key={i} style={{ marginBottom:12 }}>
+              <div style={{ display:"flex", justifyContent:"space-between", fontSize:12,
+                color:C.muted, marginBottom:5 }}>
+                <span>{b.l}</span><span style={{ color:C.text }}>{b.v}/100</span>
+              </div>
+              <div style={{ height:3, background:"rgba(255,255,255,0.08)" }}>
+                <div style={{ height:"100%", width:`${b.v}%`, background:C.cyan, transition:"width 1s" }} />
+              </div>
+            </div>
+          ))}
+          <div style={{ marginTop:20, paddingTop:20, borderTop:`1px solid ${C.border}`,
+            display:"flex", justifyContent:"space-between", alignItems:"baseline" }}>
+            <span style={{ fontFamily:"monospace", fontSize:10, color:C.muted, letterSpacing:2 }}>RFI LEAD</span>
+            <span style={{ fontFamily:"Georgia,serif", fontSize:44, color:C.cyan }}>+35%</span>
+          </div>
+        </div>
+        <div style={{ display:"flex", flexDirection:"column", gap:16 }}>
+          <div style={{ background:C.bg, border:`1px solid ${C.border}`, padding:28 }}>
+            <div style={{ fontSize:10, color:C.muted, letterSpacing:3, marginBottom:6 }}>// RUNNER UP</div>
+            <div style={{ fontFamily:"Georgia,serif", fontSize:28, color:"#fff", marginBottom:16 }}>Adjust</div>
+            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"baseline" }}>
+              <span style={{ fontFamily:"monospace", fontSize:10, color:C.muted }}>RFP LEAD (AF)</span>
+              <span style={{ fontFamily:"Georgia,serif", fontSize:40, color:C.gold }}>+42%</span>
+            </div>
+          </div>
+          <div style={{ background:C.bg, border:`1px solid ${C.border}`, padding:22,
+            display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:12 }}>
+            {["Branch · 63", "Singular · 58", "Kochava · 52"].map((v,i) => (
+              <div key={i} style={{ textAlign:"center" }}>
+                <div style={{ fontFamily:"Georgia,serif", fontSize:16, color:C.muted }}>{v.split("·")[0]}</div>
+                <div style={{ fontFamily:"monospace", fontSize:10, color:C.muted }}>{v.split("·")[1]}/100</div>
+              </div>
+            ))}
+          </div>
+          <div style={{ background:C.bg, border:`1px solid ${C.border}`, padding:22 }}>
+            <div style={{ fontFamily:"monospace", fontSize:9, color:C.muted, letterSpacing:3, marginBottom:14 }}>// RFI CATEGORIES</div>
+            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8 }}>
+              {["Attribution Accuracy","Deep Links","Owned Channels","CTV & Gaming","Data Privacy","Ad Fraud","Data Clean Room","Reporting & Insights","Operations & Support"].map((c,i) => (
+                <div key={i} style={{ fontSize:11, color:C.muted, display:"flex", alignItems:"center", gap:6 }}>
+                  <span style={{ width:5, height:5, background:C.lime, borderRadius:"50%", flexShrink:0 }} />{c}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </Sec>
+  );
+}
+
+// ── ATT Section
+function ATT() {
+  const flows = [
+    { icon:"OPT+", title:"ATT Opt-In: Deterministic Attribution", tag:"45% CONSENT RATE", tagC:C.lime,
+      text:"Real-time IDFA enables full campaign reporting. Unlocks ML models for NBA prediction, fraud prevention, LTV cohorts, and in-platform bid optimization." },
+    { icon:"OPT−", title:"ATT Opt-Out: Aggregated Only", tag:"55% OPT-OUT TODAY", tagC:C.pink,
+      text:"Without IDFA: revenue event only, aggregated campaign-level reports. Blind spots in Retargeting, fraud detection hampered, LTV prediction degraded." },
+    { icon:"SKAN", title:"SKAN: iOS Attribution Beyond ATT", tag:"COMPLEMENTARY", tagC:C.lime,
+      text:"SKAN conversion schema provides aggregated iOS attribution without IDFA. Industry templates for Telecoms. Hybrid ATT + SKAN is Telco UK's optimal posture." },
+    { icon:"ROI", title:"Strategic & Analytical Imperative", tag:"5-10% INCREMENTAL LIFT", tagC:C.lime,
+      text:"ATT is a measurement imperative. Restores iOS campaign visibility, bridges data gaps for Hybrid attribution, leverages consent data for audience targeting." },
+  ];
+  const bigStats = [
+    { n:"69%", l:"iOS Share of App Revenue", c:C.cyan },
+    { n:"72%", l:"iOS Share of App Purchases", c:C.gold },
+    { n:"55%", l:"Current ATT Opt-Out Rate", c:C.pink },
+    { n:"7×", l:"iOS Spend Increase in EU (2025)", c:C.cyan },
+  ];
+  return (
+    <Sec id="att">
+      <SH num="// 02 · ATT BUSINESS CASE" title="The ATT" accent="Imperative"
+        desc="With 55% iOS opt-out, is ATT worth pursuing? Yes — iOS drives 69% of Telco UK app revenue." />
+      <div style={{ display:"grid", gridTemplateColumns:"3fr 2fr", gap:48 }}>
         <div>
-          <div class="flow-title">ATT Opt-Out: Aggregated Only</div>
-          <div class="flow-text">Without IDFA: only revenue event available, campaign-level aggregated reports with no breakdowns by media strategy or format. Blind spots in Retargeting, fraud detection severely hampered, LTV prediction degraded.</div>
-          <span class="flow-tag opt-out">55% OPT-OUT TODAY</span>
+          {flows.map((f,i) => (
+            <div key={i} style={{ display:"grid", gridTemplateColumns:"72px 1fr", gap:20,
+              padding:"20px 0", borderBottom:`1px solid ${C.border}` }}>
+              <div style={{ width:52, height:52, border:`1px solid ${C.border}`,
+                display:"flex", alignItems:"center", justifyContent:"center",
+                fontFamily:"monospace", fontSize:11, color:C.cyan, flexShrink:0 }}>{f.icon}</div>
+              <div>
+                <div style={{ fontSize:15, fontWeight:600, color:"#fff", marginBottom:6 }}>{f.title}</div>
+                <div style={{ fontSize:13, color:C.muted, lineHeight:1.6, marginBottom:8 }}>{f.text}</div>
+                <span style={{ fontFamily:"monospace", fontSize:10, letterSpacing:2,
+                  padding:"2px 8px", border:`1px solid ${f.tagC}`, color:f.tagC }}>{f.tag}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+        <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
+          {bigStats.map((s,i) => (
+            <div key={i} style={{ background:C.bg2, border:`1px solid ${C.border}`, padding:24, textAlign:"center" }}>
+              <div style={{ fontFamily:"Georgia,serif", fontSize:54, color:s.c, lineHeight:1 }}>{s.n}</div>
+              <div style={{ fontSize:11, color:C.muted, letterSpacing:2, marginTop:4 }}>{s.l}</div>
+            </div>
+          ))}
         </div>
       </div>
-      <div class="flow-item">
-        <div class="flow-icon">SKAN</div>
+    </Sec>
+  );
+}
+
+// ── Deep Linking
+function DeepLink() {
+  const [tab, setTab] = useState("overview");
+  const tabs = [
+    { id:"overview", label:"Overview" }, { id:"android", label:"Android" },
+    { id:"ios", label:"iOS" }, { id:"params", label:"Parameters" }
+  ];
+  const content = {
+    overview: (
+      <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:40 }}>
+        <div style={{ background:C.bg2, border:`1px solid ${C.border}`, padding:28 }}>
+          <div style={{ fontFamily:"monospace", fontSize:9, color:C.muted, letterSpacing:3, marginBottom:16 }}>// ONELINK STRUCTURE</div>
+          <div style={{ background:"#020810", border:`1px solid ${C.border}`, padding:14,
+            fontFamily:"monospace", fontSize:11, lineHeight:1.8, marginBottom:20, wordBreak:"break-all" }}>
+            <span style={{ color:C.cyan }}>https://</span><span style={{ color:C.lime }}>telcoprovider-app</span>
+            <span style={{ color:C.muted }}>.onelink.me/1234/?</span>
+            <span style={{ color:C.pink }}>pid</span>=<span style={{ color:C.cyan }}>facebook_int</span>
+            &amp;<span style={{ color:C.pink }}>deep_link_value</span>=<span style={{ color:C.cyan }}>upgrade/5G</span>
+          </div>
+          {[["01","User Clicks OneLink","From email, push, paid ad, QR code or smart banner"],
+            ["02","App Installed?","YES → Direct Deep Link. NO → App Store then Deferred Deep Link on launch."],
+            ["03","SDK Fires UDL API","Retrieves deep_link_value and deep_link_sub1–10 from AppsFlyer servers"],
+            ["04","Route to Destination","App reads deep_link_value and navigates to precise in-app page"]
+          ].map(([n,t,d]) => (
+            <div key={n} style={{ display:"flex", gap:14, padding:"12px 0", borderBottom:`1px solid ${C.border}` }}>
+              <div style={{ width:30, height:30, border:`1px solid ${C.cyan}`, display:"flex",
+                alignItems:"center", justifyContent:"center", fontFamily:"monospace",
+                fontSize:11, color:C.cyan, flexShrink:0 }}>{n}</div>
+              <div><div style={{ fontSize:13, fontWeight:600, color:"#fff", marginBottom:3 }}>{t}</div>
+                <div style={{ fontSize:12, color:C.muted }}>{d}</div></div>
+            </div>
+          ))}
+        </div>
+        <div style={{ display:"flex", flexDirection:"column", gap:16 }}>
+          {[["DIRECT DEEP LINK","App Already Installed","Opens app routing directly via URI scheme or Universal/App Links. DeepLink object carries deep_link_value.",false],
+            ["DEFERRED DEEP LINK","App Not Installed","Redirects to App Store. After install, SDK fires UDL API or GCD callback to retrieve original click parameters.",true],
+            ["BRANDED DOMAIN","CNAME Setup Required","app.telcoprovider.co.uk → telcoprovider-app.customlinks.appsflyer.com",false]
+          ].map(([badge,title,text,gold]) => (
+            <div key={title} style={{ background:C.bg2, border:`1px solid ${C.border}`, padding:22 }}>
+              <span style={{ fontFamily:"monospace", fontSize:9, letterSpacing:2, padding:"2px 8px",
+                background: gold ? "rgba(255,184,0,0.1)" : "rgba(0,229,200,0.1)",
+                color: gold ? C.gold : C.cyan,
+                border:`1px solid ${gold ? "rgba(255,184,0,0.3)" : "rgba(0,229,200,0.3)"}`,
+                display:"inline-block", marginBottom:8 }}>{badge}</span>
+              <div style={{ fontSize:14, fontWeight:600, color:"#fff", marginBottom:6 }}>{title}</div>
+              <div style={{ fontSize:13, color:C.muted, lineHeight:1.6 }}>{text}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    ),
+    android: (
+      <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:40 }}>
+        <div style={{ background:C.bg2, border:`1px solid ${C.border}`, padding:28 }}>
+          {[["01","SHA256 Fingerprint","Google Play Console → App Signing → SHA-256 certificate fingerprint"],
+            ["02","App Link Intent-Filter","AndroidManifest.XML → android:host=\"telcoprovider-app.onelink.me\""],
+            ["03","URI Scheme","telco://mainactivity — share with marketer for OneLink setup"],
+            ["04","Implement UDL","onDeepLinking() in DeepLinkingListener → DeepLinkResult carries deep_link_value"]
+          ].map(([n,t,d]) => (
+            <div key={n} style={{ display:"flex", gap:14, padding:"12px 0", borderBottom:`1px solid ${C.border}` }}>
+              <div style={{ width:30, height:30, border:`1px solid ${C.cyan}`, display:"flex",
+                alignItems:"center", justifyContent:"center", fontFamily:"monospace",
+                fontSize:11, color:C.cyan, flexShrink:0 }}>{n}</div>
+              <div><div style={{ fontSize:13, fontWeight:600, color:"#fff", marginBottom:3 }}>{t}</div>
+                <div style={{ fontSize:12, color:C.muted }}>{d}</div></div>
+            </div>
+          ))}
+        </div>
+        <div style={{ background:"#020810", border:`1px solid ${C.border}`, padding:22,
+          fontFamily:"monospace", fontSize:12, lineHeight:2 }}>
+          <div style={{ color:C.muted }}>// AndroidManifest.XML</div>
+          <div>&lt;intent-filter <span style={{ color:C.cyan }}>android:autoVerify</span>=<span style={{ color:C.gold }}>"true"</span>&gt;</div>
+          <div>&nbsp;&nbsp;&lt;data <span style={{ color:C.cyan }}>android:host</span>=<span style={{ color:C.gold }}>"telcoprovider-app.onelink.me"</span></div>
+          <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style={{ color:C.cyan }}>android:scheme</span>=<span style={{ color:C.gold }}>"https"</span>/&gt;</div>
+          <div>&lt;/intent-filter&gt;</div>
+          <br/>
+          <div style={{ color:C.muted }}>// URI Scheme fallback</div>
+          <div>&lt;data <span style={{ color:C.cyan }}>android:host</span>=<span style={{ color:C.gold }}>"mainactivity"</span></div>
+          <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style={{ color:C.cyan }}>android:scheme</span>=<span style={{ color:C.gold }}>"telco"</span>/&gt;</div>
+        </div>
+      </div>
+    ),
+    ios: (
+      <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:40 }}>
+        <div style={{ background:C.bg2, border:`1px solid ${C.border}`, padding:28 }}>
+          {[["01","Bundle ID & Team Prefix","Apple Developer → Certificates, Identifiers & Profiles"],
+            ["02","Enable Associated Domains","Xcode → Capabilities: applinks:telcoprovider-app.onelink.me"],
+            ["03","URI Scheme in Info.plist","URL Schemes → \"telcoprovider\" for telco://deeplink fallback"],
+            ["04","Implement UDL iOS","didResolveDeepLink() in DeepLinkDelegate → DeepLink carries deep_link_value"]
+          ].map(([n,t,d]) => (
+            <div key={n} style={{ display:"flex", gap:14, padding:"12px 0", borderBottom:`1px solid ${C.border}` }}>
+              <div style={{ width:30, height:30, border:`1px solid ${C.cyan}`, display:"flex",
+                alignItems:"center", justifyContent:"center", fontFamily:"monospace",
+                fontSize:11, color:C.cyan, flexShrink:0 }}>{n}</div>
+              <div><div style={{ fontSize:13, fontWeight:600, color:"#fff", marginBottom:3 }}>{t}</div>
+                <div style={{ fontSize:12, color:C.muted }}>{d}</div></div>
+            </div>
+          ))}
+        </div>
+        <div style={{ display:"flex", flexDirection:"column", gap:16 }}>
+          {[["UNIVERSAL LINKS","Apple's Preferred (iOS 9+)","HTTP/HTTPS links iOS intercepts and opens directly — no browser redirect. Requires AASA file on OneLink subdomain."],
+            ["URI SCHEME","Fallback Mechanism","telco://mainactivity fallback when Universal Links fail. Disambiguation dialog may appear if multiple apps share the scheme."]
+          ].map(([b,t,d]) => (
+            <div key={t} style={{ background:C.bg2, border:`1px solid ${C.border}`, padding:22 }}>
+              <span style={{ fontFamily:"monospace", fontSize:9, letterSpacing:2, padding:"2px 8px",
+                background:"rgba(0,229,200,0.1)", color:C.cyan, border:`1px solid rgba(0,229,200,0.3)`,
+                display:"inline-block", marginBottom:8 }}>{b}</span>
+              <div style={{ fontSize:14, fontWeight:600, color:"#fff", marginBottom:6 }}>{t}</div>
+              <div style={{ fontSize:13, color:C.muted, lineHeight:1.6 }}>{d}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    ),
+    params: (
+      <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:40 }}>
+        <div style={{ background:C.bg2, border:`1px solid ${C.border}`, padding:28 }}>
+          {[["&pid","Media Source","facebook_int, google_ads, email_unica, push_notifications"],
+            ["&c","Campaign Name","upgrade_5g_summer25, winback_dormant_july"],
+            ["dlv","deep_link_value","In-app destination: upgrade/5G, plans/HBB, account/bills"],
+            ["sub","deep_link_sub1–10","Personalisation metadata: promo codes, segments, A/B variants"]
+          ].map(([n,t,d]) => (
+            <div key={n} style={{ display:"flex", gap:14, padding:"12px 0", borderBottom:`1px solid ${C.border}` }}>
+              <div style={{ fontFamily:"monospace", fontSize:10, color:C.cyan, flexShrink:0, width:36, paddingTop:2 }}>{n}</div>
+              <div><div style={{ fontSize:13, fontWeight:600, color:"#fff", marginBottom:3 }}>{t}</div>
+                <div style={{ fontSize:12, color:C.muted }}>{d}</div></div>
+            </div>
+          ))}
+        </div>
+        <div style={{ background:"#020810", border:`1px solid ${C.border}`, padding:22,
+          fontFamily:"monospace", fontSize:12, lineHeight:2 }}>
+          <div style={{ color:C.muted }}>// UDL Payload</div>
+          <div>{"{"}</div>
+          <div>&nbsp;&nbsp;<span style={{ color:C.cyan }}>"deep_link_value"</span>: <span style={{ color:C.gold }}>"upgrade/5G"</span>,</div>
+          <div>&nbsp;&nbsp;<span style={{ color:C.cyan }}>"deep_link_sub1"</span>: <span style={{ color:C.gold }}>"summer_promo"</span>,</div>
+          <div>&nbsp;&nbsp;<span style={{ color:C.cyan }}>"deep_link_sub2"</span>: <span style={{ color:C.gold }}>"winback_segment"</span></div>
+          <div>{"}"}</div>
+          <br/>
+          <div style={{ color:C.muted }}>// GCD Payload (SRN)</div>
+          <div>{"{"}</div>
+          <div>&nbsp;&nbsp;<span style={{ color:C.cyan }}>"media_source"</span>: <span style={{ color:C.gold }}>"facebook"</span>,</div>
+          <div>&nbsp;&nbsp;<span style={{ color:C.cyan }}>"af_status"</span>: <span style={{ color:C.gold }}>"Non-organic"</span>,</div>
+          <div>&nbsp;&nbsp;<span style={{ color:C.cyan }}>"is_first_launch"</span>: <span style={{ color:C.lime }}>true</span></div>
+          <div>{"}"}</div>
+        </div>
+      </div>
+    )
+  };
+  return (
+    <Sec id="deeplink" alt>
+      <SH num="// 03 · DEEP LINKING" title="OneLink" accent="Architecture"
+        desc="OneLink — a single smart URL handling every device, OS, channel and platform scenario." />
+      <div style={{ display:"flex", gap:0, borderBottom:`1px solid ${C.border}`, marginBottom:32 }}>
+        {tabs.map(t => (
+          <button key={t.id} onClick={() => setTab(t.id)}
+            style={{ padding:"10px 22px", background:"none",
+              fontFamily:"monospace", fontSize:11, letterSpacing:2, textTransform:"uppercase",
+              color: tab===t.id ? C.cyan : C.muted, cursor:"pointer",
+              borderBottom: tab===t.id ? `2px solid ${C.cyan}` : "2px solid transparent",
+              border:"none", borderBottom: tab===t.id ? `2px solid ${C.cyan}` : "2px solid transparent",
+              marginBottom:-1, transition:"color .2s" }}>
+            {t.label}
+          </button>
+        ))}
+      </div>
+      {content[tab]}
+    </Sec>
+  );
+}
+
+// ── Deferred
+function Deferred() {
+  return (
+    <Sec id="deferred">
+      <SH num="// 04 · DEFERRED DEEP LINKING" title="UDL vs" accent="GCD"
+        desc="Two methods, two scenarios. Both must be implemented. UDL for owned channels. GCD for all SRN traffic." />
+      <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:32, marginBottom:24 }}>
+        {[{
+          id:"UDL", name:"Unified Deep Linking", sub:"// OWNED CHANNELS · NON-SRN",
+          items:["Email, push notifications, owned web, QR codes","Paid media excluding Google, Meta, Snap, TikTok, Amazon","Returns: deep_link_value + deep_link_sub1-10","Android: onDeepLinking() in DeepLinkingListener","iOS: didResolveDeepLink() in DeepLinkDelegate"],
+          code:`if status == "FOUND":\n  route(deep_link_value)\nelif status == "NOT_FOUND":\n  # fallback to GCD`
+        },{
+          id:"GCD", name:"Get Conversion Data", sub:"// SRN MEDIA · UDL FALLBACK",
+          items:["Critical for Google, Meta, Snap, TikTok, Amazon","Activates when UDL returns NOT_FOUND or >15 min click-to-install","Returns: media_source, campaign, af_status, af_sub1-5","Check is_first_launch: true + af_status: Non-organic before routing"],
+          code:`onConversionDataSuccess(data):\n  if data.af_status != "Non-organic": stop\n  if data.is_first_launch != true: stop\n  route(mapToDeepLinkObject(data))`
+        }].map(m => (
+          <div key={m.id} style={{ background:C.bg2, border:`1px solid ${C.border}`, padding:28 }}>
+            <div style={{ width:44, height:44, border:`1px solid ${C.border}`, display:"flex",
+              alignItems:"center", justifyContent:"center", fontFamily:"monospace",
+              fontSize:13, color:C.cyan, marginBottom:14 }}>{m.id}</div>
+            <div style={{ fontFamily:"Georgia,serif", fontSize:26, color:"#fff", marginBottom:4 }}>{m.name}</div>
+            <div style={{ fontFamily:"monospace", fontSize:10, color:C.muted, letterSpacing:2, marginBottom:16 }}>{m.sub}</div>
+            <ul style={{ listStyle:"none", padding:0, display:"flex", flexDirection:"column", gap:6, marginBottom:16 }}>
+              {m.items.map((li,i) => (
+                <li key={i} style={{ fontSize:12, color:C.muted, display:"flex", gap:8, lineHeight:1.5 }}>
+                  <span style={{ color:C.cyan, flexShrink:0 }}>→</span>{li}
+                </li>
+              ))}
+            </ul>
+            <div style={{ background:"#020810", border:`1px solid ${C.border}`, padding:14,
+              fontFamily:"monospace", fontSize:11, color:C.lime, lineHeight:1.8, whiteSpace:"pre" }}>
+              {m.code}
+            </div>
+          </div>
+        ))}
+      </div>
+      <div style={{ padding:20, background:"rgba(255,184,0,0.05)", border:`1px solid rgba(255,184,0,0.2)` }}>
+        <div style={{ fontFamily:"monospace", fontSize:10, color:C.gold, letterSpacing:3, marginBottom:8 }}>// CRITICAL</div>
+        <p style={{ fontSize:13, color:C.text, lineHeight:1.7, margin:0 }}>
+          <strong style={{ color:C.gold }}>Both UDL and GCD are required — not optional.</strong> GCD is the essential fallback for all SRN traffic and when click-to-install exceeds 15 minutes.
+        </p>
+      </div>
+    </Sec>
+  );
+}
+
+// ── Growth
+function Growth() {
+  const pillars = [
+    { icon:"RE-ENG", title:"Re-engagement", c:C.cyan, text:"Win back 83% dormant users with personalised push via OneLinks, location targeting, upsell and cross-sell" },
+    { icon:"ACQUI", title:"Acquisition", c:C.lime, text:"Smart Banner (15% NOI), Smart Script (37% CTI), email-to-app (9.5% install rate), DPA via OneLinks" },
+    { icon:"DATA", title:"Bespoke Reporting", c:C.gold, text:"One source of truth: web + app + CTV. Custom KPI dashboards, retention curves, LTV event analysis" },
+    { icon:"DCR", title:"Data Clean Room", c:C.pink, text:"Privacy-first collaboration for Meta, TikTok view-through. Omnichannel measurement at SKU level" },
+  ];
+  return (
+    <Sec id="growth">
+      <SH num="// 05 · ONE SCREEN VISION" title="Growth &" accent="Re-engagement"
+        desc="Turning 7.5M dormant users into active revenue through precision targeting and deep linking." />
+      <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:18, marginBottom:40 }}>
+        {pillars.map((p,i) => (
+          <div key={i} style={{ background:C.bg2, border:`1px solid ${C.border}`, padding:"24px 18px",
+            textAlign:"center", borderBottom:`3px solid ${p.c}` }}>
+            <div style={{ fontFamily:"Georgia,serif", fontSize:26, color:p.c, marginBottom:10 }}>{p.icon}</div>
+            <div style={{ fontSize:14, fontWeight:600, color:"#fff", marginBottom:8 }}>{p.title}</div>
+            <div style={{ fontSize:12, color:C.muted, lineHeight:1.5 }}>{p.text}</div>
+          </div>
+        ))}
+      </div>
+      <div style={{ background:"linear-gradient(135deg,rgba(0,229,200,0.06),rgba(184,255,0,0.03))",
+        border:`1px solid ${C.border}`, padding:36, display:"flex", alignItems:"center", gap:40 }}>
+        <div style={{ fontFamily:"Georgia,serif", fontSize:72, color:C.cyan, lineHeight:1, flexShrink:0 }}>£17.3M</div>
         <div>
-          <div class="flow-title">SKAN: iOS Attribution Beyond the ATT Wall</div>
-          <div class="flow-text">SKAN conversion schema templates provide aggregated iOS attribution without IDFA. Industry templates available for Telecoms. Complements ATT — not a replacement. Hybrid ATT + SKAN approach is Telco UK's optimal measurement posture.</div>
-          <span class="flow-tag opt-in">COMPLEMENTARY</span>
+          <span style={{ fontFamily:"monospace", fontSize:10, letterSpacing:2,
+            background:"rgba(255,75,122,0.1)", color:C.pink, border:`1px solid rgba(255,75,122,0.3)`,
+            padding:"3px 10px", display:"inline-block", marginBottom:8 }}>MISATTRIBUTED REVENUE · GA4-ONLY</span>
+          <div style={{ fontSize:18, fontWeight:600, color:"#fff", marginBottom:8 }}>Revenue Lost to Measurement Gaps</div>
+          <p style={{ fontSize:14, color:C.muted, lineHeight:1.6, margin:0, maxWidth:500 }}>
+            Over 12 months £17.3M in app revenue was inaccurately attributed. GA4 alone cannot resolve
+            cross-platform attribution, walled garden data, or SRN deduplication.
+          </p>
         </div>
       </div>
-      <div class="flow-item">
-        <div class="flow-icon">ROI</div>
+    </Sec>
+  );
+}
+
+// ── Roadmap
+function Roadmap() {
+  const phases = [
+    { ph:"// PHASE 01 · FOUNDATION", title:"SDK Integration & ATT Deployment",
+      desc:"Core SDK, ATT prompt, basic attribution live. MMP onboarding alignment.",
+      chips:["AppsFlyer SDK","ATT Prompt Design","Basic Attribution"] },
+    { ph:"// PHASE 02 · DEEP LINKING", title:"OneLink + UDL + GCD Configuration",
+      desc:"Branded CNAME. Android App Links + iOS Universal Links. UDL and GCD QA tested.",
+      chips:["CNAME DNS Setup","UDL Implementation","GCD Fallback","QA Testing","Push Links","Email-to-App"] },
+    { ph:"// PHASE 03 · INTEGRATIONS", title:"Partner Integrations + Re-engagement",
+      desc:"All SRN + CRM integrations live. Smart Banner, DPA via OneLinks. Braze flows.",
+      chips:["Google Ads / DV360","Meta + TikTok","Apple Search Ads","Braze Integration","Smart Banner","RTG Campaigns"] },
+    { ph:"// PHASE 04 · MATURITY", title:"Data Locker + Advanced Analytics + DCR",
+      desc:"Data Locker to GCS, SKAN schema, incrementality, Data Clean Room, MMM.",
+      chips:["Data Locker → GCS","SKAN Schema","Audience Activation","Incrementality","DCR Setup","MMM Integration"] },
+  ];
+  return (
+    <Sec id="roadmap" alt>
+      <SH num="// 06 · IMPLEMENTATION ROADMAP" title="Next" accent="Steps"
+        desc="Phased deployment from SDK integration through full measurement maturity." />
+      <div style={{ borderLeft:`1px solid ${C.cyan}`, paddingLeft:32 }}>
+        {phases.map((p,i) => (
+          <div key={i} style={{ position:"relative", marginBottom:36 }}>
+            <div style={{ position:"absolute", left:-38, top:6, width:12, height:12,
+              border:`2px solid ${C.cyan}`, background:C.bg2, borderRadius:"50%" }} />
+            <div style={{ fontFamily:"monospace", fontSize:10, color:C.cyan, letterSpacing:3, marginBottom:5 }}>{p.ph}</div>
+            <div style={{ fontSize:16, fontWeight:600, color:"#fff", marginBottom:6 }}>{p.title}</div>
+            <div style={{ fontSize:13, color:C.muted, marginBottom:14 }}>{p.desc}</div>
+            <div style={{ display:"flex", flexWrap:"wrap", gap:8 }}>
+              {p.chips.map((c,j) => (
+                <span key={j} style={{ background:C.bg, border:`1px solid ${C.border}`,
+                  padding:"7px 12px", fontSize:11, color:C.muted, letterSpacing:1 }}>{c}</span>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </Sec>
+  );
+}
+
+// ── Integrations
+function Integrations() {
+  const [filter, setFilter] = useState("all");
+  const filters = [
+    { id:"all", label:"All Partners" }, { id:"srn", label:"SRN Networks" },
+    { id:"std", label:"Standard" }, { id:"crm", label:"CRM / MarTech" },
+    { id:"aff", label:"Affiliate" }
+  ];
+  const filterColors = { all:C.cyan, srn:C.cyan, std:C.lime, crm:C.gold, aff:C.pink };
+
+  const groups = [
+    { cat:"srn", label:"Self-Reporting Networks", badgeLabel:"SRN · GCD REQUIRED", badgeC:C.cyan,
+      cards:[
+        { name:"Google Ads", type:"SRN", sub:"// UAC · PMAX · SEARCH · DISPLAY",
+          items:["Enable Google Ads as integrated partner in AppsFlyer dashboard","Link account via Google MCC — requires admin access","Configure in-app event postbacks: install, purchase, signup","Enable auto-tagging (gclid) in Google Ads settings","Import AppsFlyer events into Google Ads for Smart Bidding","GCD required — Google does not support direct UDL resolution"],
+          note:"⚠ Smart Bidding needs 30+ conversions/month per campaign", noteC:C.gold },
+        { name:"DV360", type:"SRN", sub:"// PROGRAMMATIC · VIEW-THROUGH · CTV",
+          items:["Connect via Google Marketing Platform — same MCC link as Google Ads","Enable view-through attribution window — recommend 24h","Impression tracking pixel placed on DV360 creatives","Floodlight activity tags sync for cross-channel deduplication","CTV attribution requires AppsFlyer CTV connector (separate SKU)","Configure postbacks for PDP, checkout, plan_upgrade events"],
+          note:"ℹ DV360 impression-to-install attributed separately from UAC", noteC:C.cyan },
+        { name:"Apple Search Ads", type:"SRN", sub:"// ASA · SEARCH MATCH · LAT USERS",
+          items:["Integrate via Apple Search Ads API — requires Apple Ads account linkage","Add AdServices.framework to iOS app for attribution token support","Configure AppsFlyer ASA integration: API key + org ID","LAT users: attribution via Search Ads Attribution API only","Attribution window: 30-day click (ASA default) — align with AppsFlyer","Use keyword_id + ad_group_id for granular keyword reporting"],
+          note:"✓ ASA critical for iOS — no IDFA needed, highest-intent install channel", noteC:C.lime },
+        { name:"Meta", type:"SRN", sub:"// AEM · DCR · ADVANTAGE+ · RTG",
+          items:["Enable Meta as integrated partner — enter Meta App ID and App Secret","Configure AEM (Aggregated Event Measurement) for iOS 14.5+","Set up Meta Data Clean Room for view-through attribution","Map AF events to Meta Standard Events: Purchase, CompleteRegistration","Advantage+ campaigns require CAPI server-side postback","GCD is the ONLY deferred deep link method for Meta traffic"],
+          note:"✗ Meta blocks UDL entirely — GCD fallback is non-negotiable", noteC:C.pink },
+        { name:"TikTok", type:"SRN", sub:"// TT4B · SAN · VIEW-THROUGH · SPARK",
+          items:["Connect TikTok for Business account via AppsFlyer TikTok integration","Enter TikTok App ID from TikTok Ads Manager → Assets → Apps","Enable TikTok Pixel for web-to-app attribution flow","Configure in-app event postbacks with TikTok event mapping","View-through attribution window: 24h recommended","GCD required — confirm is_first_launch check before routing"],
+          note:"⚠ TikTok Spark Ads require separate Spark token setup", noteC:C.gold },
+        { name:"Snapchat", type:"SRN", sub:"// SNAP AUDIENCE NETWORK · SAN",
+          items:["Enable Snap as integrated partner — enter Snap App ID","Configure SAN postback for install and re-engagement events","Set up Snap Pixel for web traffic alongside app campaigns","View-through window: 1 day — align with AppsFlyer settings","GCD required — Snap is an SRN","Enable deferred deep linking via af_dp parameter in Snap ad URLs"],
+          note:"ℹ Snap skews 18–34 — relevant for Telco UK youth SIM-only acquisition", noteC:C.cyan },
+        { name:"Amazon Ads", type:"SRN", sub:"// DSP · SPONSORED · FIRE TV",
+          items:["API credentials via Amazon Attribution console","Amazon DSP for re-engagement and prospecting campaigns","Fire TV install attribution requires separate CTV connector","Configure impression + click tracking macros in Amazon ad tags","GCD required — Amazon is an SRN","IAP events require Amazon IAP SDK alongside AppsFlyer"],
+          note:"⚠ Amazon Attribution and DSP are separate products — link both in AppsFlyer", noteC:C.gold },
+      ]
+    },
+    { cat:"std", label:"Standard Networks", badgeLabel:"CLICK-BASED · UDL RESOLVES", badgeC:C.lime,
+      cards:[
+        { name:"Reddit Ads", type:"STANDARD", sub:"// CLICK · CONVERSATION · APP INSTALL",
+          items:["Enable Reddit as integrated partner — enter Reddit Pixel ID + Conversion Token","Add af_siteid=reddit macro to Reddit ad link parameters","Configure postback events: install, account_created, plan_upgrade","Click-through attribution window: 7 days (Reddit default)","UDL resolves correctly — no GCD override needed","Exclude organic via af_status=Non-organic in reporting"],
+          note:"✓ Reddit strong for tech-savvy early adopters — 5G and HBB campaigns", noteC:C.lime },
+      ]
+    },
+    { cat:"aff", label:"Affiliate Networks", badgeLabel:"POSTBACK URL · COMMISSION", badgeC:C.pink,
+      cards:[
+        { name:"Rakuten", type:"AFFILIATE", sub:"// AFFILIATE · PUBLISHER · CASHBACK",
+          items:["Set up Rakuten as custom partner — no native integration template","Generate postback URL from AppsFlyer: install + revenue events","Pass Rakuten click ID via af_sub1 for publisher-level reporting","Configure Rakuten tracking links with AppsFlyer redirect URLs","Set deduplication window: last-click wins vs affiliate attribution","Reconcile Rakuten commission reports vs AppsFlyer installs monthly"],
+          note:"⚠ Cashback publishers may inflate install counts — apply Protect360", noteC:C.gold },
+      ]
+    },
+    { cat:"crm", label:"CRM & MarTech", badgeLabel:"BI-DIRECTIONAL SYNC", badgeC:C.gold,
+      cards:[
+        { name:"Braze", type:"CRM", sub:"// PUSH · IN-APP · EMAIL · CANVAS",
+          items:["Enable AppsFlyer–Braze integration: Braze REST API Key + endpoint","Forward AF in-app events → Braze Custom Events for trigger logic","Sync AF audience segments to Braze for push and in-app targeting","Deep link Braze push notifications via OneLink — use af_dp parameter","Connected Content in Braze pulls AF attribution data into messages","Braze Canvas triggered by AF dormancy signal for re-engagement"],
+          note:"✓ Braze + AppsFlyer: highest-value pairing for 7.5M dormant user re-engagement", noteC:C.lime },
+        { name:"Salesforce MC", type:"CRM", sub:"// SFMC · MOBILE STUDIO · JOURNEY BUILDER",
+          items:["Connect via SFMC connector — OAuth 2.0 auth flow","Push AF install and LTV events into SFMC Contact Builder data extensions","Trigger Journey Builder entry events based on AF install signals","MobilePush SDK shares device tokens with AppsFlyer for attribution","Deep link SFMC push via OneLink URL in MobilePush message config","Reconcile SFMC engagement data with AF cohort reports for LTV modelling"],
+          note:"ℹ SFMC push attribution requires pid=salesforce_int on all tracked links", noteC:C.cyan },
+      ]
+    },
+  ];
+
+  const typeColors = { SRN:C.cyan, STANDARD:C.lime, AFFILIATE:C.pink, CRM:C.gold };
+
+  return (
+    <Sec id="integrations">
+      <SH num="// 07 · PARTNER INTEGRATIONS" title="Integration" accent="Playbook"
+        desc="Setup requirements, event mapping and gotchas for every partner in Telco UK's media mix." />
+
+      {/* Filter buttons */}
+      <div style={{ display:"flex", gap:8, flexWrap:"wrap", marginBottom:36 }}>
+        {filters.map(f => {
+          const on = filter === f.id;
+          const fc = filterColors[f.id];
+          return (
+            <button key={f.id} onClick={() => setFilter(f.id)}
+              style={{ padding:"8px 20px", fontFamily:"monospace", fontSize:10,
+                letterSpacing:2, textTransform:"uppercase", cursor:"pointer", transition:"all .2s",
+                background: on ? fc : "transparent",
+                color: on ? (f.id==="std"||f.id==="crm" ? C.bg : (f.id==="aff"?"#fff":C.bg)) : C.muted,
+                border: `1px solid ${on ? fc : C.border}` }}>
+              {f.label}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Groups */}
+      {groups.map(grp => {
+        if (filter !== "all" && filter !== grp.cat) return null;
+        return (
+          <div key={grp.cat} style={{ marginBottom:40 }}>
+            <div style={{ display:"flex", alignItems:"center", gap:16, paddingBottom:16,
+              fontFamily:"monospace", fontSize:10, letterSpacing:3, color:C.muted }}>
+              {grp.label}
+              <span style={{ padding:"2px 10px", fontSize:9, border:`1px solid ${grp.badgeC}`,
+                color:grp.badgeC }}>{grp.badgeLabel}</span>
+              <div style={{ flex:1, height:1, background:C.border }} />
+            </div>
+            <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))", gap:16 }}>
+              {grp.cards.map((card,ci) => {
+                const tc = typeColors[card.type] || C.cyan;
+                return (
+                  <div key={ci} style={{ background:C.bg2, border:`1px solid ${C.border}`,
+                    padding:22, transition:"border-color .3s",
+                    borderTop:`2px solid ${tc}` }}>
+                    <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:4 }}>
+                      <div style={{ fontFamily:"Georgia,serif", fontSize:22, color:"#fff" }}>{card.name}</div>
+                      <span style={{ fontFamily:"monospace", fontSize:9, letterSpacing:2, padding:"2px 7px",
+                        border:`1px solid ${tc}`, color:tc }}>{card.type}</span>
+                    </div>
+                    <div style={{ fontFamily:"monospace", fontSize:10, color:C.muted,
+                      letterSpacing:2, marginBottom:14 }}>{card.sub}</div>
+                    <ul style={{ listStyle:"none", padding:0, marginBottom:14,
+                      display:"flex", flexDirection:"column", gap:5 }}>
+                      {card.items.map((item,ii) => (
+                        <li key={ii} style={{ fontSize:12, color:C.muted, display:"flex",
+                          alignItems:"flex-start", gap:7, lineHeight:1.5 }}>
+                          <span style={{ color:tc, flexShrink:0, fontSize:14, lineHeight:1 }}>·</span>{item}
+                        </li>
+                      ))}
+                    </ul>
+                    <div style={{ paddingTop:10, borderTop:`1px solid ${C.border}`,
+                      fontFamily:"monospace", fontSize:10, letterSpacing:1,
+                      lineHeight:1.6, color:card.noteC }}>{card.note}</div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })}
+
+      <div style={{ background:"rgba(0,229,200,0.03)", border:`1px solid rgba(0,229,200,0.2)`,
+        padding:"24px 28px", marginTop:24, display:"grid", gridTemplateColumns:"auto 1fr", gap:20, alignItems:"center" }}>
+        <div style={{ fontFamily:"Georgia,serif", fontSize:22, color:C.cyan,
+          border:`1px solid ${C.border}`, padding:"10px 14px" }}>NOTE</div>
+        <p style={{ fontSize:13, color:C.muted, lineHeight:1.8, margin:0 }}>
+          All integrations require <strong style={{ color:C.text }}>in-app event postback configuration</strong> in AppsFlyer under Configuration → Integrated Partners.{" "}
+          <strong style={{ color:C.text }}>SRN partners (Google, Meta, TikTok, Snapchat, Amazon) require GCD</strong> in addition to UDL.
+          Always test with a <strong style={{ color:C.text }}>sandbox app version</strong> before pushing to production.
+        </p>
+      </div>
+    </Sec>
+  );
+}
+
+// ── FAQ
+function FAQ() {
+  const [openItem, setOpenItem] = useState(null);
+  const [activePanel, setActivePanel] = useState("locker");
+  const panelRefs = { locker:useRef(), discrepancy:useRef(), bestpractices:useRef() };
+
+  const scrollToPanel = (id) => {
+    setActivePanel(id);
+    panelRefs[id]?.current?.scrollIntoView({ behavior:"smooth", block:"start" });
+  };
+
+  const faqItems = [
+    { id:"f1", tag:"COMMON", tagC:C.gold,
+      q:"Why do AppsFlyer installs differ from Google Ads conversions?",
+      a: <div>
+        <p style={{ fontSize:13, color:C.muted, lineHeight:1.75, marginBottom:10 }}>Key causes:</p>
+        <ul style={{ listStyle:"none", padding:0 }}>
+          {[["Attribution window mismatch","Google Ads defaults to 30-day click / 1-day view. AppsFlyer defaults to 7-day click. Align both platforms before running campaigns."],
+            ["Cross-device installs","Google may attribute an install on device 2 to a click on device 1. AppsFlyer attributes to the device where the app was installed."],
+            ["Organic installs","Google counts brand-search installs post-ad-impression. AppsFlyer marks these as organic."],
+            ["Fraud filtering","Protect360 removes installs Google counted. Fraudulent traffic never appears in AppsFlyer dashboards."]
+          ].map(([k,v],i) => (
+            <li key={i} style={{ fontSize:13, color:C.muted, display:"flex", gap:8, lineHeight:1.6, marginBottom:6 }}>
+              <span style={{ color:C.cyan, flexShrink:0 }}>→</span>
+              <span><strong style={{ color:C.text }}>{k}:</strong> {v}</span>
+            </li>
+          ))}
+        </ul>
+        <p style={{ fontSize:13, color:C.muted, marginTop:8 }}><strong style={{ color:C.text }}>Resolution:</strong> Accept 5–15% discrepancy as normal industry tolerance.</p>
+      </div>
+    },
+    { id:"f2", tag:"HIGH IMPACT", tagC:C.pink,
+      q:"Meta and AppsFlyer show very different install counts — why?",
+      a: <div>
+        <ul style={{ listStyle:"none", padding:0 }}>
+          {[["AEM aggregation","Meta receives limited conversion events from ATT opt-out users. Remaining conversions are modelled, not deterministic."],
+            ["View-through attribution","Meta counts 1-day view impressions as attributable. AppsFlyer requires explicit view-through window config."],
+            ["Walled garden data","Meta does not share raw impression/click data. Full reconciliation requires Meta's Data Clean Room."]
+          ].map(([k,v],i) => (
+            <li key={i} style={{ fontSize:13, color:C.muted, display:"flex", gap:8, lineHeight:1.6, marginBottom:6 }}>
+              <span style={{ color:C.cyan, flexShrink:0 }}>→</span>
+              <span><strong style={{ color:C.text }}>{k}:</strong> {v}</span>
+            </li>
+          ))}
+        </ul>
+        <div style={{ background:"#020810", border:`1px solid ${C.border}`, padding:"10px 14px",
+          fontFamily:"monospace", fontSize:11, color:C.lime, lineHeight:1.7, margin:"10px 0" }}>
+          Expected discrepancy: 20–40% on iOS traffic post-ATT rollout
+        </div>
+        <p style={{ fontSize:13, color:C.muted }}><strong style={{ color:C.text }}>Resolution:</strong> Activate Meta Advanced Analytics (DCR). Use AppsFlyer Aggregated Advanced Privacy (AAP) report.</p>
+      </div>
+    },
+    { id:"f3", tag:"BILLING", tagC:C.gold,
+      q:"Cost figures in AppsFlyer don't match ad platform invoices",
+      a: <div>
+        <ul style={{ listStyle:"none", padding:0 }}>
+          {[["Currency conversion","AppsFlyer converts costs to USD at daily exchange rates. Platform invoices may use GBP billing."],
+            ["Cost API timing","Spend data has a 24–48h delay. Intraday spend in AppsFlyer is estimated, not final."],
+            ["VAT exclusion","AppsFlyer pulls net spend — invoices include VAT. Always compare net-of-VAT figures."],
+            ["Credit adjustments","Invalid click refunds are applied post-invoice. Raw cost data won't reflect these retroactively."]
+          ].map(([k,v],i) => (
+            <li key={i} style={{ fontSize:13, color:C.muted, display:"flex", gap:8, lineHeight:1.6, marginBottom:6 }}>
+              <span style={{ color:C.cyan, flexShrink:0 }}>→</span>
+              <span><strong style={{ color:C.text }}>{k}:</strong> {v}</span>
+            </li>
+          ))}
+        </ul>
+        <p style={{ fontSize:13, color:C.muted, marginTop:8 }}><strong style={{ color:C.text }}>Resolution:</strong> Use AppsFlyer as directional cost data only. Reconcile final budgets against platform invoices.</p>
+      </div>
+    },
+    { id:"f4", tag:"SDK ISSUE", tagC:C.pink,
+      q:"AppsFlyer shows installs but no in-app events are firing",
+      a: <div>
+        <ul style={{ listStyle:"none", padding:0 }}>
+          {[["Events not called","Developer has not called logEvent() at the correct journey point — verify with Engineering."],
+            ["Event naming mismatch","Event names are case-sensitive. \"purchase\" ≠ \"Purchase\". Confirm exact strings match SDK and AppsFlyer dashboard."],
+            ["Partner postback not enabled","Events logged to AppsFlyer but the postback to the ad partner is not switched on in Integrated Partners settings."],
+            ["iOS consent","ATT opt-out users — events appear in aggregated reports only, never user-level raw data."]
+          ].map(([k,v],i) => (
+            <li key={i} style={{ fontSize:13, color:C.muted, display:"flex", gap:8, lineHeight:1.6, marginBottom:6 }}>
+              <span style={{ color:C.cyan, flexShrink:0 }}>→</span>
+              <span><strong style={{ color:C.text }}>{k}:</strong> {v}</span>
+            </li>
+          ))}
+        </ul>
+        <div style={{ background:"#020810", border:`1px solid ${C.border}`, padding:"10px 14px",
+          fontFamily:"monospace", fontSize:11, color:C.lime, marginTop:8 }}>
+          Debug: SDK → setDebugLog(true) + use AppsFlyer SDK Integration Tester app
+        </div>
+      </div>
+    },
+    { id:"f5", tag:"DEEP LINK", tagC:C.pink,
+      q:"Deep links not routing to the correct in-app page",
+      a: <div>
+        <ul style={{ listStyle:"none", padding:0 }}>
+          {[["Step 1 — Verify UDL","Confirm onDeepLinking() / didResolveDeepLink() is being called. Log DeepLinkResult status."],
+            ["Step 2 — Check GCD for SRN","Google/Meta/TikTok/Snap/Amazon UDL returns NOT_FOUND by design — GCD must handle routing."],
+            ["Step 3 — Validate deep_link_value","Use AppsFlyer Link Validator. Confirm value is set in OneLink URL and readable in callback object."],
+            ["Step 4 — AASA file (iOS)","Verify apple-app-site-association accessible at telcoprovider-app.onelink.me/.well-known/ with correct bundle ID."],
+            ["Step 5 — Intent filter (Android)","Confirm android:autoVerify=\"true\" and Digital Asset Links JSON reachable at your domain."]
+          ].map(([k,v],i) => (
+            <li key={i} style={{ fontSize:13, color:C.muted, display:"flex", gap:8, lineHeight:1.6, marginBottom:6 }}>
+              <span style={{ color:C.cyan, flexShrink:0 }}>→</span>
+              <span><strong style={{ color:C.text }}>{k}:</strong> {v}</span>
+            </li>
+          ))}
+        </ul>
+        <div style={{ background:"#020810", border:`1px solid ${C.border}`, padding:"10px 14px",
+          fontFamily:"monospace", fontSize:10, color:C.lime, marginTop:8, wordBreak:"break-all" }}>
+          adb shell am start -W -a android.intent.action.VIEW -d "https://telcoprovider-app.onelink.me/1234/?deep_link_value=upgrade/5G" com.telcoprovider.app
+        </div>
+      </div>
+    },
+    { id:"f6", tag:"STRATEGY", tagC:C.lime,
+      q:"When should we use multi-touch attribution vs last-click?",
+      a: <div>
+        <ul style={{ listStyle:"none", padding:0 }}>
+          {[["Last-click (default)","100% credit to last touchpoint. Simple but undervalues upper-funnel channels like DV360 and Snapchat."],
+            ["Multi-touch (MTA)","Distributes credit across all touchpoints. Requires 10k+ installs/month for reliable modelling."],
+            ["Contributor fields","contributor_1–3 in Data Locker capture prior touchpoints without changing last-click for ad platform signals."],
+            ["Data-driven (DDA)","Available via AppsFlyer + Google UAC. Requires 300+ installs and 3,000+ ad interactions in 30 days."]
+          ].map(([k,v],i) => (
+            <li key={i} style={{ fontSize:13, color:C.muted, display:"flex", gap:8, lineHeight:1.6, marginBottom:6 }}>
+              <span style={{ color:C.cyan, flexShrink:0 }}>→</span>
+              <span><strong style={{ color:C.text }}>{k}:</strong> {v}</span>
+            </li>
+          ))}
+        </ul>
+        <p style={{ fontSize:13, color:C.muted, marginTop:8 }}><strong style={{ color:C.text }}>Recommendation:</strong> Start last-click. Use contributor fields in Data Locker for MTA analysis. Graduate to full MTA at 5,000 installs/month.</p>
+      </div>
+    },
+  ];
+
+  const bpCards = [
+    { n:"01", title:"Align Attribution Windows Before Launch", text:"Set identical click and view-through windows across AppsFlyer AND all integrated partners before any paid campaigns. Misaligned windows are the #1 cause of discrepancy escalations.", bold:"Recommended: 7-day click, 1-day view." },
+    { n:"02", title:"Always Test in Sandbox Before Production", text:"Use a separate AppsFlyer App ID for QA. Test every deep link scenario — direct link, deferred (fresh install), UDL flow, and GCD flow for each SRN.", bold:"Never push untested deep link code to production." },
+    { n:"03", title:"Standardise Event Naming Taxonomy", text:"Define and lock a global event taxonomy before SDK integration. Use snake_case: plan_upgrade, sim_activation, bill_payment, app_open_d7.", bold:"Agreed by Marketing, Analytics and Engineering before any build." },
+    { n:"04", title:"Implement Both UDL and GCD from Day One", text:"UDL alone silently breaks for all SRN traffic.", bold:"Both methods are required — not optional. GCD fallback must always check is_first_launch and af_status before routing." },
+    { n:"05", title:"Enable Protect360 Fraud Protection", text:"Activate on all campaigns from launch. Configure real-time blocking for install hijacking, click flooding, fake devices, and bot traffic.", bold:"Review blocked installs weekly." },
+    { n:"06", title:"Separate App IDs by Environment", text:"Maintain distinct AppsFlyer App IDs for iOS Production, Android Production, iOS QA, Android QA.", bold:"Never mix QA events with production data." },
+    { n:"07", title:"Data Locker as Single Source of Truth", text:"Route all raw data to GCS from day one. Dashboard data retained for 24 months only.", bold:"Raw Data Locker files retained indefinitely and enable GDPR deletion workflows." },
+    { n:"08", title:"GDPR & Data Retention Governance", text:"Ensure DPA is signed before go-live. Configure user deletion API for DSR workflows.", bold:"Set event-level retention to 6 months in AppsFlyer. Apply GCS lifecycle rules aligned with Telco UK's 13-month policy." },
+  ];
+
+  const sidenavItems = [
+    { id:"locker", label:"Data Locker" },
+    { id:"discrepancy", label:"Discrepancy FAQ" },
+    { id:"bestpractices", label:"Best Practices" },
+  ];
+
+  return (
+    <Sec id="faq" alt>
+      <SH num="// 08 · FAQ & BEST PRACTICES" title="Knowledge" accent="Base"
+        desc="Data Locker setup, discrepancy explanations and integration guidelines for Telco UK's technical teams." />
+      <div style={{ display:"grid", gridTemplateColumns:"180px 1fr", gap:48, alignItems:"start" }}>
+
+        {/* Sidenav */}
+        <div style={{ position:"sticky", top:70 }}>
+          <div style={{ fontFamily:"monospace", fontSize:9, color:C.muted, letterSpacing:3, marginBottom:12 }}>// JUMP TO</div>
+          {sidenavItems.map(n => (
+            <button key={n.id} onClick={() => scrollToPanel(n.id)}
+              style={{ display:"flex", alignItems:"center", gap:8, width:"100%",
+                padding:"10px 12px", marginBottom:4, background:"none",
+                fontFamily:"monospace", fontSize:11, textAlign:"left",
+                color: activePanel===n.id ? C.cyan : C.muted,
+                border:"none", borderLeft: `2px solid ${activePanel===n.id ? C.cyan : C.border}`,
+                background: activePanel===n.id ? "rgba(0,229,200,0.04)" : "transparent",
+                cursor:"pointer", transition:"all .2s" }}>
+              <span style={{ width:5, height:5, borderRadius:"50%", background:"currentColor", flexShrink:0 }} />
+              {n.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Content */}
         <div>
-          <div class="flow-title">Strategic &amp; Analytical Imperative</div>
-          <div class="flow-text">ATT deployment is not a technical option — it's a measurement imperative. Restores visibility into iOS campaign effectiveness, bridges data gaps for Hybrid attribution, leverages consent data for efficient audience targeting and media accountability.</div>
-          <span class="flow-tag opt-in">5-10% INCREMENTAL LIFT</span>
-        </div>
-      </div>
-    </div>
+          {/* DATA LOCKER */}
+          <div ref={panelRefs.locker} style={{ marginBottom:56, scrollMarginTop:80 }}>
+            <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:6 }}>
+              <span style={{ fontFamily:"Georgia,serif", fontSize:28, color:"#fff" }}>Data Locker</span>
+              <span style={{ fontFamily:"monospace", fontSize:10, color:C.cyan, letterSpacing:2 }}>// RAW DATA EXPORT</span>
+            </div>
+            <p style={{ fontSize:13, color:C.muted, lineHeight:1.7, marginBottom:24, maxWidth:680 }}>
+              Delivers raw AppsFlyer data — installs, in-app events, clicks, impressions, cost — directly to cloud storage. Critical for Telco UK's custom BI, LTV modelling, and GDPR workflows.
+            </p>
+            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:20, marginBottom:20 }}>
+              {[
+                { id:"gcp", provider:"Google Cloud", sub:"// GCS → BIGQUERY → LOOKER", c:C.cyan,
+                  steps:[
+                    ["01","Grant bucket access","GCP Console → Cloud Storage → IAM → Add datalake@appsflyer-prod.iam.gserviceaccount.com with Storage Object Admin role"],
+                    ["02","Configure in AppsFlyer","Settings → Data Locker → New Bucket → GCS → Enter bucket name, region europe-west2, folder prefix"],
+                    ["03","Select report types","Installs, In-App Events, Uninstalls, Retargeting, Cost, Impressions, Clicks — enable ALL for full fidelity"],
+                    ["04","Delivery schedule","Hourly (recommended). Files land as gzipped CSV partitioned by dt=YYYY-MM-DD/h=HH/"],
+                    ["05","BigQuery pipeline","Cloud Function → BQ load job. Partition on event_time, cluster on media_source + app_id"],
+                    ["06","Connect Looker Studio","Point to BigQuery dataset. AppsFlyer LookML blocks available via partner marketplace"],
+                  ],
+                  code:"gs://telcoprovider-af-datalake/\n  t=installs/dt=2025-06-15/h=14/data.csv.gz\n  t=in_app_events/dt=2025-06-15/h=14/data.csv.gz"
+                },
+                { id:"aws", provider:"Amazon S3", sub:"// S3 → ATHENA → REDSHIFT", c:C.gold,
+                  steps:[
+                    ["01","Create S3 bucket","Region: eu-west-2 (London). Enable versioning + SSE-KMS encryption. Block all public access."],
+                    ["02","Create IAM policy","Grant arn:aws:iam::661170127613:root with s3:PutObject and s3:GetBucketLocation on your bucket ARN"],
+                    ["03","Configure in AppsFlyer","Settings → Data Locker → New Bucket → S3 → Enter bucket name, ARN, prefix. AppsFlyer verifies with test write."],
+                    ["04","Athena integration","Create Glue Crawler to catalogue S3 partitions. Query via Athena. Use partition projection for performance."],
+                    ["05","Redshift Spectrum","External schema in Redshift pointing to Glue catalogue for SQL analytics + CRM data joins"],
+                    ["06","Cost control","S3 lifecycle rules — files older than 90 days to Glacier. Use partition pruning in all Athena queries."],
+                  ],
+                  code:"\"Principal\": {\"AWS\": \"arn:aws:iam::661170127613:root\"},\n\"Action\": [\"s3:PutObject\", \"s3:GetBucketLocation\"],\n\"Resource\": \"arn:aws:s3:::telcoprovider-af-raw/*\""
+                }
+              ].map(lc => (
+                <div key={lc.id} style={{ background:C.bg, border:`1px solid ${C.border}`, padding:24, borderLeft:`3px solid ${lc.c}` }}>
+                  <div style={{ fontFamily:"Georgia,serif", fontSize:24, color:lc.c, marginBottom:4 }}>{lc.provider}</div>
+                  <div style={{ fontFamily:"monospace", fontSize:10, color:C.muted, letterSpacing:2, marginBottom:16 }}>{lc.sub}</div>
+                  {lc.steps.map(([n,t,d]) => (
+                    <div key={n} style={{ display:"flex", gap:10, padding:"8px 10px",
+                      background:"rgba(255,255,255,0.02)", border:`1px solid rgba(255,255,255,0.04)`, marginBottom:6 }}>
+                      <div style={{ fontFamily:"monospace", fontSize:10, color:C.muted, flexShrink:0, width:20, marginTop:1 }}>{n}</div>
+                      <div style={{ fontSize:12, color:C.muted, lineHeight:1.5 }}>
+                        <strong style={{ color:C.text }}>{t}:</strong> {d}
+                      </div>
+                    </div>
+                  ))}
+                  <div style={{ background:"#020810", border:`1px solid ${C.border}`, padding:12,
+                    fontFamily:"monospace", fontSize:11, color:lc.c, lineHeight:1.8, whiteSpace:"pre", marginTop:12 }}>
+                    {lc.code}
+                  </div>
+                </div>
+              ))}
+            </div>
 
-    <div class="att-stats-stack fade-up d2">
-      <div class="att-stat-big">
-        <div class="n cyan">69%</div>
-        <div class="l">iOS Share of App Revenue</div>
-      </div>
-      <div class="att-stat-big">
-        <div class="n gold">72%</div>
-        <div class="l">iOS Share of App Purchases</div>
-      </div>
-      <div class="att-stat-big">
-        <div class="n pink">55%</div>
-        <div class="l">Current ATT Opt-Out Rate at Telco UK</div>
-      </div>
-      <div class="att-stat-big">
-        <div class="n cyan">7×</div>
-        <div class="l">iOS Spend Increase in EU (AppsFlyer 2025)</div>
-      </div>
-    </div>
-  </div>
-</section>
+            {/* Schema */}
+            <div style={{ background:C.bg, border:`1px solid ${C.border}`, padding:22 }}>
+              <div style={{ fontFamily:"monospace", fontSize:9, color:C.muted, letterSpacing:3, marginBottom:14 }}>// KEY DATA LOCKER FIELDS</div>
+              <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:10 }}>
+                {[["appsflyer_id","Unique AF device ID"],["media_source","Attributed channel"],["campaign","Campaign name/ID"],["event_name","Install or custom event"],["event_time","UTC timestamp"],["event_revenue","Revenue value (GBP)"],["idfa / gaid","Device advertising ID"],["is_retargeting","Re-engagement flag"],["install_time","First install timestamp"],["country_code","ISO 3166 (GB)"],["af_keywords","Keyword from ASA/Google"],["contributor_1–3","Multi-touch chain"]].map(([k,v],i) => (
+                  <div key={i} style={{ background:"rgba(0,229,200,0.03)", border:`1px solid ${C.border}`, padding:"10px 12px", fontSize:11, color:C.muted }}>
+                    <strong style={{ display:"block", color:C.cyan, fontFamily:"monospace", fontSize:10, marginBottom:3 }}>{k}</strong>{v}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
 
-<!-- ══════════════════ DEEP LINKING ══════════════════ -->
-<section id="deeplink">
-  <div class="section-header fade-up">
-    <div class="section-num">// 03 · DEEP LINKING</div>
-    <h2>OneLink <span>Architecture</span></h2>
-    <p class="section-desc">OneLink — a single smart URL that handles every device, OS, channel and platform scenario. Configured with Telco UK's branded domain via CNAME pointing to AppsFlyer servers.</p>
-  </div>
+          {/* DISCREPANCY FAQ */}
+          <div ref={panelRefs.discrepancy} style={{ marginBottom:56, scrollMarginTop:80 }}>
+            <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:6 }}>
+              <span style={{ fontFamily:"Georgia,serif", fontSize:28, color:"#fff" }}>Data Discrepancy FAQ</span>
+              <span style={{ fontFamily:"monospace", fontSize:10, color:C.cyan, letterSpacing:2 }}>// EXPLAINED</span>
+            </div>
+            <p style={{ fontSize:13, color:C.muted, lineHeight:1.7, marginBottom:24 }}>
+              Discrepancies between AppsFlyer and ad platform dashboards are normal — but understanding root causes is critical for confident budget decisions.
+            </p>
+            <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
+              {faqItems.map(item => (
+                <div key={item.id} style={{ background:C.bg, border:`1px solid ${openItem===item.id ? "rgba(0,229,200,0.4)" : C.border}`, overflow:"hidden", transition:"border-color .25s" }}>
+                  <div onClick={() => setOpenItem(openItem===item.id ? null : item.id)}
+                    style={{ display:"flex", justifyContent:"space-between", alignItems:"center",
+                      padding:"16px 20px", cursor:"pointer", userSelect:"none" }}>
+                    <div style={{ display:"flex", alignItems:"center", gap:10, flex:1, marginRight:14 }}>
+                      <span style={{ fontFamily:"monospace", fontSize:9, letterSpacing:1,
+                        padding:"2px 7px", border:`1px solid ${item.tagC}`, color:item.tagC,
+                        flexShrink:0 }}>{item.tag}</span>
+                      <span style={{ fontSize:13, fontWeight:600, color: openItem===item.id ? C.cyan : C.text }}>{item.q}</span>
+                    </div>
+                    <span style={{ fontSize:22, color:C.cyan, flexShrink:0, lineHeight:1, fontWeight:300,
+                      transform: openItem===item.id ? "rotate(45deg)" : "none", transition:"transform .3s" }}>+</span>
+                  </div>
+                  {openItem===item.id && (
+                    <div style={{ padding:"0 20px 20px" }}>{item.a}</div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
 
-  <div class="dl-tabs fade-up">
-    <div class="dl-tab active" onclick="switchTab(this,'tab-overview')">Overview</div>
-    <div class="dl-tab" onclick="switchTab(this,'tab-android')">Android</div>
-    <div class="dl-tab" onclick="switchTab(this,'tab-ios')">iOS</div>
-    <div class="dl-tab" onclick="switchTab(this,'tab-params')">Parameters</div>
-  </div>
-
-  <!-- Overview Tab -->
-  <div id="tab-overview" class="dl-panel active">
-    <div>
-      <div class="flow-diagram">
-        <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);margin-bottom:20px;letter-spacing:2px">// ONELINK STRUCTURE</div>
-        <div class="uri-block" style="margin-bottom:24px">
-          <span class="uri-cyan">https://</span><span class="uri-lime">telcoprovider-app</span><span class="uri-muted">.onelink.me/</span><span class="uri-gold">1234</span><span class="uri-muted">/?</span><span class="uri-pink">pid</span>=<span class="uri-cyan">facebook_int</span>&<span class="uri-pink">c</span>=<span class="uri-cyan">upgrade_promo</span>&<span class="uri-pink">deep_link_value</span>=<span class="uri-cyan">upgrade/5G</span>&<span class="uri-pink">af_android_url</span>=<span class="uri-gold">telco://upgrade</span>&<span class="uri-pink">af_ios_url</span>=<span class="uri-gold">telco://upgrade</span>
-        </div>
-        <div class="flow-step">
-          <div class="step-num">01</div>
-          <div class="step-content">
-            <div class="step-title">User Clicks OneLink</div>
-            <div class="step-text">From email, push notification, paid ad, QR code, or smart banner</div>
-          </div>
-        </div>
-        <div class="flow-step">
-          <div class="step-num">02</div>
-          <div class="step-content">
-            <div class="step-title">App Installed?</div>
-            <div class="step-text">YES → Direct Deep Link opens app to specific screen. NO → Redirects to correct App Store then Deferred Deep Link on launch.</div>
-          </div>
-        </div>
-        <div class="flow-step">
-          <div class="step-num">03</div>
-          <div class="step-content">
-            <div class="step-title">AppsFlyer SDK Fires UDL API</div>
-            <div class="step-text">Retrieves deep_link_value and deep_link_sub1-10 from AppsFlyer servers</div>
-          </div>
-        </div>
-        <div class="flow-step">
-          <div class="step-num">04</div>
-          <div class="step-content">
-            <div class="step-title">Route to In-App Destination</div>
-            <div class="step-text">App logic reads deep_link_value and navigates user to the precise in-app page or experience</div>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="dl-explain">
-      <div class="explain-card">
-        <div class="explain-badge">DIRECT DEEP LINK</div>
-        <h4>App Already Installed</h4>
-        <p>Opens the app and routes directly to a specific in-app activity using URI scheme or Universal/App Links. OneLink data is passed via UDL API and the DeepLink object carries deep_link_value.</p>
-      </div>
-      <div class="explain-card">
-        <div class="explain-badge gold">DEFERRED DEEP LINK</div>
-        <h4>App Not Installed</h4>
-        <p>Redirects to correct App Store. After install, the app opens and AppsFlyer SDK fires the UDL API or GCD callback to retrieve original click parameters and route user to intended destination.</p>
-      </div>
-      <div class="explain-card">
-        <div class="explain-badge">BRANDED DOMAIN</div>
-        <h4>Telco UK CNAME Setup Required</h4>
-        <p>DNS admin configures CNAME: <strong style="color:var(--cyan)">app.telcoprovider.co.uk</strong> → <strong style="color:var(--lime)">telcoprovider-app.customlinks.appsflyer.com</strong>. Provides branded link experience with full attribution capability.</p>
-      </div>
-    </div>
-  </div>
-
-  <!-- Android Tab -->
-  <div id="tab-android" class="dl-panel">
-    <div>
-      <div class="flow-diagram">
-        <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);margin-bottom:20px;letter-spacing:2px">// ANDROID IMPLEMENTATION STEPS</div>
-        <div class="flow-step">
-          <div class="step-num">01</div>
-          <div class="step-content">
-            <div class="step-title">Generate SHA256 Fingerprint</div>
-            <div class="step-text">Google Play Console → Setup → App Signing → SHA-256 certificate fingerprint</div>
-          </div>
-        </div>
-        <div class="flow-step">
-          <div class="step-num">02</div>
-          <div class="step-content">
-            <div class="step-title">Add App Link Intent-Filter</div>
-            <div class="step-text">Auto-generated from AppsFlyer UI → place in AndroidManifest.XML → android:host="telcoprovider-app.onelink.me"</div>
-          </div>
-        </div>
-        <div class="flow-step">
-          <div class="step-num">03</div>
-          <div class="step-content">
-            <div class="step-title">Configure URI Scheme</div>
-            <div class="step-text">Choose: telco://mainactivity · Add intent-filter in AndroidManifest · Share with marketer for OneLink setup</div>
-          </div>
-        </div>
-        <div class="flow-step">
-          <div class="step-num">04</div>
-          <div class="step-content">
-            <div class="step-title">Implement UDL (Unified Deep Linking)</div>
-            <div class="step-text">onDeepLinking() in DeepLinkingListener class · DeepLinkResult object returns deep_link_value and sub1-10</div>
+          {/* BEST PRACTICES */}
+          <div ref={panelRefs.bestpractices} style={{ scrollMarginTop:80 }}>
+            <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:6 }}>
+              <span style={{ fontFamily:"Georgia,serif", fontSize:28, color:"#fff" }}>Integration Best Practices</span>
+              <span style={{ fontFamily:"monospace", fontSize:10, color:C.cyan, letterSpacing:2 }}>// GUIDELINES</span>
+            </div>
+            <p style={{ fontSize:13, color:C.muted, lineHeight:1.7, marginBottom:24 }}>
+              Critical guidelines for a clean, reliable AppsFlyer integration. Follow these from day one to avoid technical debt.
+            </p>
+            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:14 }}>
+              {bpCards.map((bp,i) => (
+                <div key={i} style={{ background:C.bg, border:`1px solid ${C.border}`, padding:22,
+                  borderBottom:`2px solid ${C.lime}` }}>
+                  <div style={{ fontFamily:"Georgia,serif", fontSize:38, color:C.lime,
+                    opacity:.3, lineHeight:1, marginBottom:6 }}>{bp.n}</div>
+                  <div style={{ fontSize:14, fontWeight:700, color:"#fff", marginBottom:8 }}>{bp.title}</div>
+                  <p style={{ fontSize:12, color:C.muted, lineHeight:1.65, margin:0 }}>
+                    {bp.text} <strong style={{ color:C.cyan }}>{bp.bold}</strong>
+                  </p>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>
-    </div>
-    <div>
-      <div class="code-block">
-        <span class="code-comment">// AndroidManifest.XML — App Links</span><br>
-        &lt;intent-filter <span class="code-key">android:autoVerify</span>=<span class="code-str">"true"</span>&gt;<br>
-        &nbsp;&nbsp;&lt;action <span class="code-key">android:name</span>=<span class="code-str">"android.intent.action.VIEW"</span>/&gt;<br>
-        &nbsp;&nbsp;&lt;category <span class="code-key">android:name</span>=<span class="code-str">"...DEFAULT"</span>/&gt;<br>
-        &nbsp;&nbsp;&lt;category <span class="code-key">android:name</span>=<span class="code-str">"...BROWSABLE"</span>/&gt;<br>
-        &nbsp;&nbsp;&lt;data<br>
-        &nbsp;&nbsp;&nbsp;&nbsp;<span class="code-key">android:host</span>=<span class="code-str">"telcoprovider-app.onelink.me"</span><br>
-        &nbsp;&nbsp;&nbsp;&nbsp;<span class="code-key">android:scheme</span>=<span class="code-str">"https"</span>/&gt;<br>
-        &lt;/intent-filter&gt;<br><br>
-        <span class="code-comment">// URI Scheme (fallback)</span><br>
-        &lt;data<br>
-        &nbsp;&nbsp;<span class="code-key">android:host</span>=<span class="code-str">"mainactivity"</span><br>
-        &nbsp;&nbsp;<span class="code-key">android:scheme</span>=<span class="code-str">"telco"</span>/&gt;
-      </div>
-    </div>
-  </div>
+    </Sec>
+  );
+}
 
-  <!-- iOS Tab -->
-  <div id="tab-ios" class="dl-panel">
-    <div>
-      <div class="flow-diagram">
-        <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);margin-bottom:20px;letter-spacing:2px">// iOS IMPLEMENTATION STEPS</div>
-        <div class="flow-step">
-          <div class="step-num">01</div>
-          <div class="step-content">
-            <div class="step-title">Get Bundle ID & Team Prefix</div>
-            <div class="step-text">Apple Developer → Certificates, Identifiers & Profiles → App ID Configuration</div>
-          </div>
-        </div>
-        <div class="flow-step">
-          <div class="step-num">02</div>
-          <div class="step-content">
-            <div class="step-title">Enable Associated Domains</div>
-            <div class="step-text">Xcode → Capabilities → Associated Domains: applinks:telcoprovider-app.onelink.me</div>
-          </div>
-        </div>
-        <div class="flow-step">
-          <div class="step-num">03</div>
-          <div class="step-content">
-            <div class="step-title">Configure URI Scheme in Info.plist</div>
-            <div class="step-text">URL Types → Item 0 → URL Schemes → "telcoprovider" for telco://deeplink fallback</div>
-          </div>
-        </div>
-        <div class="flow-step">
-          <div class="step-num">04</div>
-          <div class="step-content">
-            <div class="step-title">Implement UDL iOS</div>
-            <div class="step-text">didResolveDeepLink() in DeepLinkDelegate · DeepLinkResult → DeepLink object carries deep_link_value</div>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="dl-explain">
-      <div class="explain-card">
-        <div class="explain-badge">UNIVERSAL LINKS</div>
-        <h4>Apple's Preferred Method (iOS 9+)</h4>
-        <p>HTTP/HTTPS links that iOS intercepts and opens directly in the app — no browser redirect. Requires Associated Domains entitlement and AASA file hosted by AppsFlyer on the OneLink subdomain.</p>
-      </div>
-      <div class="explain-card">
-        <div class="explain-badge">URI SCHEME</div>
-        <h4>Fallback Mechanism</h4>
-        <p>telco://mainactivity style URLs. Used as fallback when Universal Links fail. Uniqueness not enforced — disambiguation dialog may appear if multiple apps claim same scheme.</p>
-      </div>
-    </div>
-  </div>
+// ── Main App
+export default function App() {
+  const [activeNav, setActiveNav] = useState("hero");
 
-  <!-- Parameters Tab -->
-  <div id="tab-params" class="dl-panel">
-    <div>
-      <div class="flow-diagram">
-        <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);margin-bottom:20px;letter-spacing:2px">// MAIN ATTRIBUTION PARAMETERS</div>
-        <div class="flow-step">
-          <div class="step-num">&pid</div>
-          <div class="step-content">
-            <div class="step-title">Media Source</div>
-            <div class="step-text">e.g. facebook_int, google_ads, email_unica, push_notifications</div>
-          </div>
-        </div>
-        <div class="flow-step">
-          <div class="step-num">&c</div>
-          <div class="step-content">
-            <div class="step-title">Campaign Name</div>
-            <div class="step-text">e.g. upgrade_5g_summer25, winback_dormant_july</div>
-          </div>
-        </div>
-        <div class="flow-step">
-          <div class="step-num">dlv</div>
-          <div class="step-content">
-            <div class="step-title">deep_link_value</div>
-            <div class="step-text">Defines in-app destination. e.g. upgrade/5G, plans/HBB, account/bills</div>
-          </div>
-        </div>
-        <div class="flow-step">
-          <div class="step-num">sub</div>
-          <div class="step-content">
-            <div class="step-title">deep_link_sub1–10</div>
-            <div class="step-text">Personalisation and contextual metadata: promo codes, user segments, A/B variants</div>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div>
-      <div class="code-block">
-        <span class="code-comment">// UDL Returned Payload</span><br>
-        {<br>
-        &nbsp;&nbsp;<span class="code-key">"deep_link_value"</span>: <span class="code-str">"upgrade/5G"</span>,<br>
-        &nbsp;&nbsp;<span class="code-key">"deep_link_sub1"</span>: <span class="code-str">"summer_promo"</span>,<br>
-        &nbsp;&nbsp;<span class="code-key">"deep_link_sub2"</span>: <span class="code-str">"winback_segment"</span>,<br>
-        &nbsp;&nbsp;<span class="code-key">"deep_link_sub3"</span>: <span class="code-str">"campaign_xyz"</span>,<br>
-        &nbsp;&nbsp;<span class="code-key">"deep_link_sub4"</span>: <span class="code-str">"referrer_789"</span>,<br>
-        &nbsp;&nbsp;<span class="code-key">"deep_link_sub5"</span>: <span class="code-str">""</span>,<br>
-        &nbsp;&nbsp;<span class="code-comment">// sub6–10 available for expansion</span><br>
-        }<br><br>
-        <span class="code-comment">// GCD Returned Payload (SRN flows)</span><br>
-        {<br>
-        &nbsp;&nbsp;<span class="code-key">"media_source"</span>: <span class="code-str">"facebook"</span>,<br>
-        &nbsp;&nbsp;<span class="code-key">"campaign"</span>: <span class="code-str">"upgrade_5g_summer25"</span>,<br>
-        &nbsp;&nbsp;<span class="code-key">"af_status"</span>: <span class="code-str">"Non-organic"</span>,<br>
-        &nbsp;&nbsp;<span class="code-key">"is_first_launch"</span>: <span class="code-val">true</span>,<br>
-        &nbsp;&nbsp;<span class="code-key">"af_sub1"</span>: <span class="code-str">"referral_abc"</span><br>
-        }
-      </div>
-    </div>
-  </div>
-</section>
+  const scrollTo = (id) => {
+    const el = document.getElementById(id);
+    if (el) {
+      const top = el.getBoundingClientRect().top + window.pageYOffset - 60;
+      window.scrollTo({ top, behavior:"smooth" });
+    }
+  };
 
-<!-- ══════════════════ DEFERRED ══════════════════ -->
-<section id="deferred">
-  <div class="section-header fade-up">
-    <div class="section-num">// 04 · DEFERRED DEEP LINKING</div>
-    <h2>UDL vs <span>GCD</span></h2>
-    <p class="section-desc">Two methods, two scenarios. Both must be implemented. UDL for owned channels and most media. GCD as the critical fallback for SRN traffic (Google, Meta, TikTok, Snapchat, Amazon).</p>
-  </div>
-
-  <div class="deferred-grid fade-up">
-    <div class="method-card">
-      <div class="method-icon">UDL</div>
-      <div class="method-name">Unified Deep Linking</div>
-      <div class="method-sub">// OWNED CHANNELS · NON-SRN MEDIA</div>
-      <ul class="method-list">
-        <li>Crucial for email, push notifications, owned web, QR codes</li>
-        <li>Works for paid media excluding Google, Meta, Snap, TikTok, Amazon</li>
-        <li>Returns: deep_link_value + deep_link_sub1-10</li>
-        <li>Android: onDeepLinking() in DeepLinkingListener</li>
-        <li>iOS: didResolveDeepLink() in DeepLinkDelegate</li>
-        <li>Flutter: appsflyerSdk.onDeepLinking() callback</li>
-      </ul>
-      <div class="logic-block">
-        <span class="logic-kw">if</span> status == <span class="logic-str">FOUND</span> && deep_link_value:<br>
-        &nbsp;&nbsp;<span class="logic-var">route</span>(deep_link_value)<br>
-        <span class="logic-kw">elif</span> status == <span class="logic-str">NOT_FOUND</span>:<br>
-        &nbsp;&nbsp;<span class="logic-cmt">// fallback to GCD</span><br>
-        &nbsp;&nbsp;<span class="logic-var">onConversionDataSuccess</span>(data)
-      </div>
-    </div>
-    <div class="method-card">
-      <div class="method-icon">GCD</div>
-      <div class="method-name">Get Conversion Data</div>
-      <div class="method-sub">// SRN MEDIA · UDL FALLBACK</div>
-      <ul class="method-list">
-        <li>Critical for Google, Meta, Snap, TikTok, Amazon (SRNs)</li>
-        <li>Activates when UDL returns NOT_FOUND or click-to-install exceeds 15 mins</li>
-        <li>Returns: media_source, campaign, af_status, click_time, install_time, af_sub1-5</li>
-        <li>onConversionDataSuccess callback in both Android and iOS</li>
-        <li>Check is_first_launch: true + af_status: Non-organic before routing</li>
-      </ul>
-      <div class="logic-block">
-        <span class="logic-kw">onConversionDataSuccess</span>(data):<br>
-        &nbsp;&nbsp;<span class="logic-kw">if</span> data.af_status != <span class="logic-str">"Non-organic"</span>: stop<br>
-        &nbsp;&nbsp;<span class="logic-kw">if</span> data.is_first_launch != <span class="logic-str">true</span>: stop<br>
-        &nbsp;&nbsp;<span class="logic-kw">if</span> data contains deep_link_value: stop<br>
-        &nbsp;&nbsp;<span class="logic-kw">elif</span> data contains legacy_param:<br>
-        &nbsp;&nbsp;&nbsp;&nbsp;<span class="logic-var">route</span>(mapToDeepLinkObject(data))
-      </div>
-    </div>
-  </div>
-
-  <div style="margin-top:32px;padding:24px;background:rgba(255,184,0,0.05);border:1px solid rgba(255,184,0,0.2)" class="fade-up">
-    <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--gold);letter-spacing:3px;margin-bottom:12px">// CRITICAL NOTE FROM IMPLEMENTATION GUIDE</div>
-    <p style="font-size:14px;color:var(--text);line-height:1.7">It is <strong style="color:var(--gold)">recommended and required</strong> to configure both UDL and GCD. UDL handles direct and non-SRN deferred scenarios. GCD is the essential fallback for SRN traffic and when click-to-install exceeds the 15-minute UDL matching window. Omitting either method will result in broken deep linking experiences for a significant portion of Telco UK's user journeys.</p>
-  </div>
-</section>
-
-<!-- ══════════════════ GROWTH / ONE SCREEN ══════════════════ -->
-<section id="onescreen">
-  <div class="section-header fade-up">
-    <div class="section-num">// 05 · ONE SCREEN VISION</div>
-    <h2>Growth & <span>Re-engagement</span></h2>
-    <p class="section-desc">AppsFlyer powers Telco UK's One Screen ambition — #1 app on every homescreen. Turning 7.5M dormant users into active revenue through precision targeting, deep linking and incremental measurement.</p>
-  </div>
-
-  <div class="os-pillars fade-up">
-    <div class="pillar c1">
-      <div class="pillar-icon">RE-ENG</div>
-      <h3>Re-engagement</h3>
-      <p>Win back 83% dormant users with personalised push via OneLinks, location targeting, upsell and cross-sell in-app experiences</p>
-    </div>
-    <div class="pillar c2">
-      <div class="pillar-icon">ACQUI</div>
-      <h3>Acquisition</h3>
-      <p>Smart Banner (15% NOI), Smart Script (37% CTI), email-to-app (9.5% install rate), referrals, DPA via OneLinks</p>
-    </div>
-    <div class="pillar c3">
-      <div class="pillar-icon">DATA</div>
-      <h3>Bespoke Reporting</h3>
-      <p>One source of truth: web + app + CTV + console. Custom KPI dashboards, retention curves, LTV event analysis, NOI health</p>
-    </div>
-    <div class="pillar c4">
-      <div class="pillar-icon">DCR</div>
-      <h3>Data Clean Room</h3>
-      <p>Privacy-first collaboration for Facebook, TikTok view-through, Twitter restricted data. Omnichannel measurement at SKU level</p>
-    </div>
-  </div>
-
-  <div class="revenue-banner fade-up">
-    <div class="rev-big">£17.3M</div>
-    <div class="rev-text">
-      <div class="rev-badge">MISATTRIBUTED REVENUE · GA4-ONLY</div>
-      <h3>Revenue Lost to Measurement Gaps</h3>
-      <p>Over 12 months £17.3M in app revenue was inaccurately attributed due to the absence of an MMP. GA4 alone cannot resolve cross-platform attribution, walled garden data, or SRN deduplication. AppsFlyer closes this gap from day one of deployment.</p>
-    </div>
-  </div>
-</section>
-
-<!-- ══════════════════ ROADMAP ══════════════════ -->
-<section id="roadmap">
-  <div class="section-header fade-up">
-    <div class="section-num">// 06 · IMPLEMENTATION ROADMAP</div>
-    <h2>Next <span>Steps</span></h2>
-    <p class="section-desc">Phased deployment from SDK integration through to full measurement maturity. Telco UK + Agency + AppsFlyer Solution Architect working in parallel tracks.</p>
-  </div>
-
-  <div class="roadmap-timeline fade-up">
-    <div class="road-item">
-      <div class="road-phase">// PHASE 01 · FOUNDATION</div>
-      <div class="road-title">SDK Integration & ATT Deployment</div>
-      <div style="font-size:14px;color:var(--muted)">Core SDK setup, ATT prompt configuration, basic attribution live. MMP onboarding: Marketer + Developer + SA + CSM alignment.</div>
-      <div class="road-items">
-        <div class="road-chip">AppsFlyer SDK Install</div>
-        <div class="road-chip">ATT Prompt Design</div>
-        <div class="road-chip">Basic Attribution</div>
-      </div>
-    </div>
-    <div class="road-item">
-      <div class="road-phase">// PHASE 02 · DEEP LINKING</div>
-      <div class="road-title">OneLink + UDL + GCD Configuration</div>
-      <div style="font-size:14px;color:var(--muted)">Branded CNAME domain setup. Android App Links + iOS Universal Links. URI scheme fallback. UDL and GCD both implemented and QA tested across all channels.</div>
-      <div class="road-items">
-        <div class="road-chip">CNAME DNS Setup</div>
-        <div class="road-chip">UDL Implementation</div>
-        <div class="road-chip">GCD Fallback Config</div>
-        <div class="road-chip">QA Deep Link Testing</div>
-        <div class="road-chip">Push Notification Links</div>
-        <div class="road-chip">Email-to-App Links</div>
-      </div>
-    </div>
-    <div class="road-item">
-      <div class="road-phase">// PHASE 03 · GROWTH ACTIVATION</div>
-      <div class="road-title">Re-engagement + Acquisition Campaigns</div>
-      <div style="font-size:14px;color:var(--muted)">Smart Banner on Telco UK web, Smart Script, DPA via OneLinks. Retargeting campaigns for dormant users. Location-based in-store push. Cart abandonment flows.</div>
-      <div class="road-items">
-        <div class="road-chip">Smart Banner Live</div>
-        <div class="road-chip">Smart Script Deploy</div>
-        <div class="road-chip">RTG Campaigns</div>
-        <div class="road-chip">Geolocation Triggers</div>
-        <div class="road-chip">Dynamic Product Ads</div>
-        <div class="road-chip">Referral Programme</div>
-      </div>
-    </div>
-    <div class="road-item">
-      <div class="road-phase">// PHASE 04 · MEASUREMENT MATURITY</div>
-      <div class="road-title">Advanced Analytics + MMM + DCR</div>
-      <div style="font-size:14px;color:var(--muted)">Full SKAN conversion schema. Audience segmentation and incrementality testing. Data Clean Room for restricted media. MMM competitive intelligence integration.</div>
-      <div class="road-items">
-        <div class="road-chip">SKAN Schema Config</div>
-        <div class="road-chip">Audience Activation</div>
-        <div class="road-chip">Incrementality Tests</div>
-        <div class="road-chip">DCR Setup</div>
-        <div class="road-chip">MMM Integration</div>
-        <div class="road-chip">CTV + Console</div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ══════════════════ FOOTER ══════════════════ -->
-<footer>
-  <div>
-    <div class="foot-logo">Telco UK <span>×</span> AppsFlyer</div>
-    <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);margin-top:6px">Mobile Measurement Strategy · Agency × Telco UK · June 2025</div>
-  </div>
-  <div class="foot-meta">
-    MMP EVALUATION · ATT STRATEGY<br>
-    DEEP LINKING · GROWTH ROADMAP
-  </div>
-  <div style="text-align:right">
-    <div class="foot-meta">CONFIDENTIAL</div>
-    <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);margin-top:4px">Sources: TelcoUK_MMP · ATT_Business_Case<br>AppsFlyer DeepLink Guide · Accenture DL Solution</div>
-  </div>
-</footer>
-
-<script>
-  // ── Navigation scrolling
-  function goTo(id){
-    const el=document.getElementById(id);
-    if(el){
-      const top=el.getBoundingClientRect().top+window.pageYOffset-70;
-      window.scrollTo({top:top,behavior:'smooth'});
-      el.querySelectorAll('.fade-up:not(.visible)').forEach(fu=>{
-        fu.classList.add('visible');
-        fu.querySelectorAll('[data-target]').forEach(animateCounter);
-        animateScoreBars(fu);
+  useEffect(() => {
+    const onScroll = () => {
+      const pos = window.scrollY + 100;
+      let cur = "hero";
+      sections.forEach(id => {
+        const el = document.getElementById(id);
+        if (el && pos >= el.offsetTop) cur = id;
       });
-    }
-  }
+      setActiveNav(cur);
+    };
+    window.addEventListener("scroll", onScroll, { passive:true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
-  // ── Cursor
-  const cursor = document.getElementById('cursor');
-  const ring = document.getElementById('cursor-ring');
-  let mx=0,my=0,rx=0,ry=0;
-  document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;cursor.style.left=mx+'px';cursor.style.top=my+'px'});
-  function animRing(){rx+=(mx-rx)*0.12;ry+=(my-ry)*0.12;ring.style.left=rx+'px';ring.style.top=ry+'px';requestAnimationFrame(animRing)}
-  animRing();
+  return (
+    <div style={{ background:C.bg, minHeight:"100vh", fontFamily:"system-ui,sans-serif" }}>
+      <style>{`
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background: ${C.bg}; }
+        ::-webkit-scrollbar { width: 3px; }
+        ::-webkit-scrollbar-track { background: ${C.bg}; }
+        ::-webkit-scrollbar-thumb { background: ${C.cyan}; }
+        @media (max-width: 900px) {
+          .hero-grid, .att-g, .def-g, .locker-grid, .bp-grid { grid-template-columns: 1fr !important; }
+        }
+      `}</style>
 
-  // ── Tabs
-  function switchTab(el,id){
-    document.querySelectorAll('.dl-tab').forEach(t=>t.classList.remove('active'));
-    document.querySelectorAll('.dl-panel').forEach(p=>p.classList.remove('active'));
-    el.classList.add('active');
-    document.getElementById(id).classList.add('active');
-  }
+      <Nav active={activeNav} onNav={scrollTo} />
 
-  // ── Counter animation
-  function animateCounter(el){
-    const target=parseFloat(el.dataset.target);
-    const isDecimal=target%1!==0;
-    let start=0;
-    const dur=2000;
-    const startTime=performance.now();
-    function update(now){
-      const progress=Math.min((now-startTime)/dur,1);
-      const ease=1-Math.pow(1-progress,3);
-      const val=start+(target-start)*ease;
-      el.textContent=isDecimal?val.toFixed(1):Math.round(val);
-      if(progress<1)requestAnimationFrame(update);
-    }
-    requestAnimationFrame(update);
-  }
+      {/* Ticker */}
+      <div style={{ position:"fixed", bottom:0, left:0, right:0, zIndex:9999,
+        background:C.cyan, height:28, overflow:"hidden", display:"flex", alignItems:"center", pointerEvents:"none" }}>
+        <div style={{ display:"flex", gap:40, whiteSpace:"nowrap",
+          animation:"ticker 30s linear infinite", fontFamily:"monospace",
+          fontSize:10, color:C.bg, fontWeight:600, letterSpacing:2 }}>
+          {["AppsFlyer Wins RFI by 35%","◆","£17.3M Revenue Misattributed Without MMP","◆","iOS Drives 69% App Revenue","◆","ATT Opt-In Unlocks 5-10% Incremental Growth","◆","9M App Users — 7.5M Dormant","◆","UDL + GCD Both Required for SRN Traffic","◆",
+            "AppsFlyer Wins RFI by 35%","◆","£17.3M Revenue Misattributed Without MMP","◆","iOS Drives 69% App Revenue","◆","ATT Opt-In Unlocks 5-10% Incremental Growth","◆","9M App Users — 7.5M Dormant","◆","UDL + GCD Both Required for SRN Traffic","◆"
+          ].map((t,i) => <span key={i} style={{ opacity: t==="◆" ? .4 : 1 }}>{t}</span>)}
+        </div>
+      </div>
 
-  // ── Score bar animation
-  function animateScoreBars(container){
-    container.querySelectorAll('.score-bar-fill').forEach(bar=>{
-      bar.style.transform=`scaleX(${bar.dataset.width/100})`;
-    });
-  }
+      <style>{`@keyframes ticker { from { transform: translateX(0) } to { transform: translateX(-50%) } }`}</style>
 
-  // ── IntersectionObserver
-  const io=new IntersectionObserver((entries)=>{
-    entries.forEach(e=>{
-      if(e.isIntersecting){
-        e.target.classList.add('visible');
-        e.target.querySelectorAll('[data-target]').forEach(animateCounter);
-        animateScoreBars(e.target);
-        io.unobserve(e.target);
-      }
-    });
-  },{threshold:0.15});
-  document.querySelectorAll('.fade-up').forEach(el=>io.observe(el));
+      {/* Sections */}
+      <Hero onNav={scrollTo} />
+      <MMP />
+      <ATT />
+      <DeepLink />
+      <Deferred />
+      <Growth />
+      <Roadmap />
+      <Integrations />
+      <FAQ />
 
-  // ── Active nav
-  const sections=['hero','mmp','att','deeplink','deferred','onescreen','roadmap'];
-  const navLinks=document.querySelectorAll('.nav-links a');
-  window.addEventListener('scroll',()=>{
-    const pos=window.scrollY+200;
-    sections.forEach((id,i)=>{
-      const sec=document.getElementById(id);
-      if(sec&&pos>=sec.offsetTop){
-        navLinks.forEach(a=>a.classList.remove('active'));
-        if(navLinks[i-1])navLinks[i-1].classList.add('active');
-      }
-    });
-  });
-</script>
-</body>
-</html>
+      {/* Footer */}
+      <footer style={{ background:C.bg, borderTop:`1px solid ${C.border}`,
+        padding:"40px 48px", display:"flex", justifyContent:"space-between", alignItems:"center", paddingBottom:44 }}>
+        <div>
+          <div style={{ fontFamily:"Georgia,serif", fontSize:20, color:C.cyan, letterSpacing:2 }}>
+            Telco UK <span style={{ color:C.lime }}>×</span> AppsFlyer
+          </div>
+          <div style={{ fontFamily:"monospace", fontSize:10, color:C.muted, marginTop:5 }}>
+            Mobile Measurement Strategy · Agency × Telco UK · June 2025
+          </div>
+        </div>
+        <div style={{ fontFamily:"monospace", fontSize:10, color:C.muted, letterSpacing:2 }}>
+          MMP · ATT · DEEP LINKS · INTEGRATIONS · FAQ
+        </div>
+        <div style={{ fontFamily:"monospace", fontSize:10, color:C.muted, textAlign:"right" }}>CONFIDENTIAL</div>
+      </footer>
+    </div>
+  );
+}
