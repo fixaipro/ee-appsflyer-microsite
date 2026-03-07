@@ -238,16 +238,20 @@ h1 .l{color:var(--lime)}
 .int-footer-lbl{font-size:20px;color:var(--cyan);border:1px solid var(--border);padding:9px 13px;flex-shrink:0}
 
 /* FAQ */
-.faq-layout{display:grid;grid-template-columns:190px 1fr;gap:48px;align-items:start}
-.faq-nav{position:sticky;top:72px;background:var(--bg2);border:1px solid var(--border);padding:16px}
-.faq-nav-lbl{font-size:9px;color:var(--muted);letter-spacing:3px;margin-bottom:12px;display:block}
-.faq-nav-btn{display:flex;align-items:center;gap:8px;width:100%;
-  padding:10px 12px;margin-bottom:3px;background:transparent;
-  font-size:11px;text-align:left;color:var(--cyan);opacity:0.55;
-  border:none;border-left:2px solid var(--border);cursor:pointer;transition:all .2s;white-space:nowrap}
-.faq-nav-btn:hover{opacity:0.85}
-.faq-nav-btn.on{opacity:1;border-left-color:var(--cyan);background:rgba(0,229,200,.06)}
-.faq-nav-btn::before{content:"";width:5px;height:5px;border-radius:50%;background:currentColor;flex-shrink:0}
+.faq-layout{display:grid;grid-template-columns:200px 1fr;gap:40px;align-items:start}
+.faq-nav{position:sticky;top:72px;z-index:10;
+  background:#1a1a1a;border:1px solid #333;
+  padding:18px 14px;box-shadow:4px 4px 20px rgba(0,0,0,0.8)}
+.faq-nav-lbl{font-size:9px;color:#888;letter-spacing:3px;margin-bottom:14px;display:block}
+.faq-nav-btn{display:flex;align-items:center;gap:9px;width:100%;
+  padding:11px 12px;margin-bottom:5px;
+  background:#252525;
+  font-size:11px;text-align:left;color:#aaa;
+  border:none;border-left:3px solid #444;
+  cursor:pointer;transition:all .2s;white-space:nowrap;letter-spacing:1px}
+.faq-nav-btn:hover{background:#2e2e2e;color:var(--cyan);border-left-color:var(--cyan)}
+.faq-nav-btn.on{background:#2a2a2a;color:var(--cyan);border-left-color:var(--cyan);font-weight:600}
+.faq-nav-btn::before{content:"";width:5px;height:5px;border-radius:50%;background:currentColor;flex-shrink:0;opacity:0.8}
 .faq-panel{margin-bottom:52px;scroll-margin-top:80px}
 .faq-panel-title{font-size:26px;color:#fff;margin-bottom:16px}
 .faq-panel-tag{font-size:9px;color:var(--cyan);letter-spacing:2px;margin-left:8px}
